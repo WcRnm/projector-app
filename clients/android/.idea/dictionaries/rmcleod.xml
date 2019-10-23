@@ -2,6 +2,7 @@
   <dictionary name="rmcleod">
     <words>
       <w>addr</w>
+      <w>ipid</w>
     </words>
   </dictionary>
 </component>
