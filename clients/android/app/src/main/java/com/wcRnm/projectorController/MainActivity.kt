@@ -8,13 +8,12 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import androidx.preference.PreferenceManager
 
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val host                            = DEFAULT_HOST
-    private val port                            = DEFAULT_PORT
     private var txtStatus  : TextView?          = null
     private var client     : Client?            = null
     private var connStatus : ConnectionStatus   = ConnectionStatus.DISCONNECTED
@@ -45,18 +44,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun onConnectButton(view: View) {
-        when(connStatus) {
-            ConnectionStatus.CONNECTED     -> this.client?.disconnect()
-            ConnectionStatus.DISCONNECTED  -> {
-                client = Client(host, port, ::onConnectionStatus)
-                client?.connect()
-            }
-            ConnectionStatus.CONNECTING    -> {}
-            ConnectionStatus.DISCONNECTING -> {}
-        }
-    }
-
     private fun onConnectionStatus(status: ConnectionStatus) {
         connStatus = status
         when (status) {
@@ -65,7 +52,12 @@ class MainActivity : AppCompatActivity() {
 
                 Handler().postDelayed(
                     {
-                        client = Client(host, port, ::onConnectionStatus)
+                        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+                        var host = prefs.getString("pref_conn_host", DEFAULT_HOST)
+
+                        if (host == "") host = DEFAULT_HOST
+
+                        client = Client(host, ::onConnectionStatus)
                         client?.connect()
                     }, 1000)
             }

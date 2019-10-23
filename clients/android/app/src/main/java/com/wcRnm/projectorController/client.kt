@@ -15,7 +15,7 @@ enum class ConnectionStatus {
 }
 typealias StatusCallback = (status: ConnectionStatus) -> Unit
 
-const val DEFAULT_HOST          = "10.0.2.2"
+const val DEFAULT_HOST          = "10.0.2.2" // Android emulator IP for development workstation
 const val DEFAULT_PORT          = 41794
 const val CONNECTION_TIMEOUT    = 5000
 const val CONNECT_TIMEOUT       = 5000
@@ -30,6 +30,12 @@ class Client : AsyncTask<Void, Void, Void> {
         private set
 
     constructor(cbStatus: StatusCallback) {
+        this.cbStatus           = cbStatus
+        this.socket.soTimeout   = CONNECTION_TIMEOUT
+    }
+
+    constructor(host: String?, cbStatus: StatusCallback) {
+        this.host               = host?: DEFAULT_HOST
         this.cbStatus           = cbStatus
         this.socket.soTimeout   = CONNECTION_TIMEOUT
     }
