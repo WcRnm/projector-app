@@ -22,7 +22,7 @@ class ProjectorSim:
                 conn, addr = s.accept()
                 try:
                     with conn:
-                        print('Connected by ', addr)
+                        print('Connected to ', addr)
                         while True:
                             data = conn.recv(64)
                             if not data:
@@ -30,7 +30,7 @@ class ProjectorSim:
 
                             # append data to pending messages
                             for b in data:
-                                pending.append(data[b])
+                                pending.append(b)
 
                             while self.handle_message(pending):
                                 continue
@@ -50,7 +50,7 @@ class ProjectorSim:
       #   return _loc4_
 
     def handle_message(self, data):
-        print('   Got $ bytes'.format(len(data)))
+        print('   Got {} bytes'.format(len(data)))
 
         while len(data) > 0:
             data.pop(0)
