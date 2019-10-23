@@ -5,7 +5,9 @@ import android.widget.Button
 import android.widget.TextView
 //import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.net.InetSocketAddress
 import java.net.Socket
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 enum class ConnectionStatus {
@@ -13,38 +15,64 @@ enum class ConnectionStatus {
 }
 typealias StatusCallback = (status: ConnectionStatus) -> Unit
 
+const val DEFAULT_HOST          = "10.0.2.2"
+const val DEFAULT_PORT          = 41794
+const val CONNECTION_TIMEOUT    = 5000
+const val CONNECT_TIMEOUT       = 5000
 
 class Client : AsyncTask<Void, Void, Void> {
-    private var host                        = "10.0.2.2"
-    private var port                        = 41794
-    private var response                    = ""
+    private var host                        = DEFAULT_HOST
+    private var port                        = DEFAULT_PORT
     private var cbStatus : StatusCallback
-    //private var tvStatus : TextView
-    //private var btnConnect: Button
+    private var socket:    Socket           = Socket()
 
-    constructor(host: String, port: Int, cbStatus: StatusCallback /*, tvStatus: TextView, btnConnect: Button */) {
-        this.host = host
-        this.port = port
-        this.cbStatus = cbStatus
-        //this.tvStatus = tvStatus
-        //this.btnConnect = btnConnect
+    var status:    ConnectionStatus = ConnectionStatus.DISCONNECTED
+        private set
+
+    constructor(cbStatus: StatusCallback) {
+        this.cbStatus           = cbStatus
+        this.socket.soTimeout   = CONNECTION_TIMEOUT
+    }
+
+    constructor(host: String, port: Int, cbStatus: StatusCallback) {
+        this.host               = host
+        this.port               = port
+        this.cbStatus           = cbStatus
+        this.socket.soTimeout   = CONNECTION_TIMEOUT
+    }
+
+    fun connect() {
+        if (status == ConnectionStatus.DISCONNECTED) {
+            this.execute()
+        }
+    }
+
+    fun disconnect() {
+        if (status == ConnectionStatus.CONNECTED) {
+            try {
+                socket.close()
+            } catch (e: IOException) {
+                // TODO Auto-generated catch block
+                e.printStackTrace()
+            }
+        }
     }
 
     override fun doInBackground(vararg params: Void?): Void? {
-        var socket: Socket? = null
-
         try {
-            socket = Socket(this.host, this.port)
+            socket.connect(InetSocketAddress(this.host, this.port), CONNECT_TIMEOUT)
+
             //val byteArrayOutputStream = ByteArrayOutputStream(1024)
             //var buffer: Array<Byte> = Array(1024)
 
             //var bytesRead: Int
-            //val inStream = socket.getInputStream()
+            val inStream = socket.getInputStream()
             val outStream = socket.getOutputStream()
 
             this.setStatus(ConnectionStatus.CONNECTED)
 
             outStream.write(1)
+            inStream.read()
 
             /*
              * notice: inputStream.read() will block if no data return
@@ -54,37 +82,32 @@ class Client : AsyncTask<Void, Void, Void> {
                 //response += byteArrayOutputStream.toString("UTF-8");
             //}
 
-            this.response = "Done"
-
         } catch (e: UnknownHostException) {
             // TODO Auto-generated catch block
             e.printStackTrace()
-            this.response = "UnknownHostException: $e"
+        } catch (e: SocketTimeoutException) {
+            e.printStackTrace()
         } catch (e: IOException) {
             // TODO Auto-generated catch block
             e.printStackTrace()
-            this.response = "IOException: $e"
         } finally {
             this.setStatus(ConnectionStatus.DISCONNECTING)
-            if (socket != null) {
-                try {
-                    socket.close()
-                } catch (e: IOException) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace()
-                }
+            try {
+                socket.close()
+            } catch (e: IOException) {
+                // TODO Auto-generated catch block
+                e.printStackTrace()
             }
         }
+
         return null
     }
 
     override fun onPreExecute() {
-        super.onPreExecute()
         this.setStatus(ConnectionStatus.CONNECTING)
     }
 
     override fun onPostExecute(result: Void?) {
-        super.onPostExecute(result)
         this.setStatus(ConnectionStatus.DISCONNECTED)
     }
 

@@ -12,10 +12,12 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val addr = "10.0.2.2"
-    private val port = 41794
-    private var btnConnect : Button? = null
-    private var txtStatus : TextView? = null
+    private val host                            = DEFAULT_HOST
+    private val port                            = DEFAULT_PORT
+    private var btnConnect : Button?            = null
+    private var txtStatus  : TextView?          = null
+    private var client     : Client?            = null
+    private var connStatus : ConnectionStatus   = ConnectionStatus.DISCONNECTED
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,26 +44,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun onConnect(view: View) {
-        val client = Client(this.addr, this.port, ::onConnectionStatus)
-        client.execute()
+    fun onConnectButton(view: View) {
+        when(connStatus) {
+            ConnectionStatus.CONNECTED     -> this.client?.disconnect()
+            ConnectionStatus.DISCONNECTED  -> {
+                client = Client(host, port, ::onConnectionStatus)
+                client?.connect()
+            }
+            ConnectionStatus.CONNECTING    -> {}
+            ConnectionStatus.DISCONNECTING -> {}
+        }
     }
 
     private fun onConnectionStatus(status: ConnectionStatus) {
-        //var tid = R
-        val connected = status == ConnectionStatus.DISCONNECTED
-
-        this.setUiText(this.txtStatus, 0)
+        connStatus = status
         when (status) {
-            ConnectionStatus.DISCONNECTED  -> this.txtStatus?.setText(R.string.status_disconnected)
-            ConnectionStatus.CONNECTED     -> this.txtStatus?.setText(R.string.status_connected)
-            ConnectionStatus.CONNECTING    -> this.txtStatus?.setText(R.string.status_connecting)
-            ConnectionStatus.DISCONNECTING -> this.txtStatus?.setText(R.string.status_disconnecting)
+            ConnectionStatus.DISCONNECTED  -> {
+                this.setUiText(this.txtStatus, R.string.status_disconnected)
+                this.setUiText(btnConnect, R.string.btn_connect)
+                this.enableUiItem(btnConnect, true)
+            }
+            ConnectionStatus.CONNECTED     -> {
+                this.setUiText(this.txtStatus, R.string.status_connected)
+                this.setUiText(btnConnect, R.string.btn_disconnect)
+                this.enableUiItem(btnConnect, true)
+            }
+            ConnectionStatus.CONNECTING    -> {
+                this.setUiText(this.txtStatus, R.string.status_connecting)
+                this.setUiText(btnConnect, R.string.btn_disconnect)
+                this.enableUiItem(btnConnect, false)
+            }
+            ConnectionStatus.DISCONNECTING -> {
+                this.setUiText(this.txtStatus, R.string.status_disconnecting)
+                this.setUiText(btnConnect, R.string.btn_disconnect)
+                this.enableUiItem(btnConnect, false)
+            }
         }
-        this.btnConnect?.setEnabled(status == ConnectionStatus.DISCONNECTED)
     }
 
-    private fun setUiText(textView: TextView?, stringId: Int) {
-        textView?.post(java.lang.Runnable { textView?.setText(stringId) })
+    private fun setUiText(textView: TextView?, resId: Int) {
+        textView?.post(java.lang.Runnable { textView.setText(resId) })
+    }
+    private fun enableUiItem(button: Button?, enable: Boolean) {
+        button?.post(java.lang.Runnable { button.setEnabled(enable) })
     }
 }
