@@ -9,6 +9,20 @@
     <string name="status_disconnected">Disconnected</string>
     <string name="status_disconnecting">Disconnecting</string>
 
+    <!-- Widgets -->
+    <string name="switch_power">Power</string>
+    <string name="switch_lamp">Lamp</string>
+    <string name="connection_status">Connection</string>
+
+    <string name="projector_addr">Server</string>
+    <string name="client_addr">Client</string>
+    <string name="addr_localhost">127.0.0.1</string>
+
+    <string name="lamp_hours_label">Lamp Hours</string>
+    <string name="lamp_hours">0</string>
+
+    <string name="projector_message_default">PROJECTOR MESSAGE HERE. YOU WILL EVENTUALLY SEE SOMETHING LIKE "Warming up"</string>
+
     <!-- Settings -->
     <string name="title_activity_settings">Settings</string>
 
