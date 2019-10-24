@@ -9,7 +9,12 @@ interface IProjector {
     val endOfQueryResponse:  ByteArray
     val updateRequestPacket: ByteArray
     fun digitalCommand(stdCmd:Int, value:Boolean, extraParam:Int = 0) : ByteArray
+
+    fun nextPacketLength(avail: ByteArray) : Int
+    fun handlePacket(data: ByteArray)
 }
+
+const val HEARTBEAT_INTERVAL = 6000
 
 const val CMD_NONE          = 0
 const val CMD_POWER_ON      = 1
@@ -69,7 +74,7 @@ const val CMD_KEYPAD_EXT2_T = 54
 const val CMD_KEYPAD_EXT3_T = 55
 const val CMD_KEYPAD_EXT4_T = 56
 
-class InfocusIN2128HDx() : IProjector {
+class InfocusIN2128HDx : IProjector {
     private val handle: Int = DEFAULT_HANDLE
     private val ipid:   Int = DEFAULT_IPID
 
@@ -117,7 +122,7 @@ class InfocusIN2128HDx() : IProjector {
 
     override fun digitalCommand(stdCmd:Int, value:Boolean, extraParam:Int) : ByteArray
     {
-        var extraLen:Byte = if (extraParam > 0) 3 else 0
+        val extraLen:Byte = if (extraParam > 0) 3 else 0
         val iCmd = stdCmd-1
 
         var cmd = byteArrayOfInts(
@@ -139,13 +144,200 @@ class InfocusIN2128HDx() : IProjector {
         cmd += 0
         cmd += (iCmd % 256).toByte()
 
-        if (!value)
-            cmd += ((iCmd / 256) or 128).toByte()
-        else
-            cmd += (iCmd / 256).toByte()
+        when (value) {
+            false -> cmd += ((iCmd / 256) or 128).toByte()
+            true  -> cmd += (iCmd / 256).toByte()
+        }
 
         return cmd
     }
 
     private fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { pos -> ints[pos].toByte() }
+
+    override fun nextPacketLength(avail: ByteArray) : Int {
+        if(avail.size < 3) {
+            return 0
+        }
+        val len = avail[1] * 256 + avail[2]
+        if(avail.size < len + 3) {
+            return 0
+        }
+
+        return len + 3
+    }
+
+    override fun handlePacket(data: ByteArray) {
+        val msgId = data[0].toInt()
+        val len = data.size
+
+        when (msgId) {
+            2    -> {
+                if (!hasCnxConnection())
+                    if (len > 5) {
+                        onConnect()
+                    }
+            }
+            3    -> onDisconnect()
+            4    -> onDisconnect()
+            5    -> handleDataPacket(data)
+            14   -> {
+                // TODO: implement
+                // if missed heart beat response ...
+                // HeartbeatEvent
+            }
+            15   -> {
+                if (len > 3) {
+                    when(data[3].toInt()) {
+                        0 -> cnxDisconnect()
+                        2 -> if (!hasCnxConnection()) sendConnectMessage()
+                    }
+                }
+            }
+            else -> { /* ignore */ }
+        }
+    }
+
+    private fun handleDigitalPacket(data:ByteArray, offset:Int) {
+        // TODO: implement
+        if(data[5 + offset].toInt() != 3) {
+            return
+        }
+        var id = data[8 + offset] * 256 + data[7 + offset]
+        id = (id and 32767) + 1
+        val stateByte = data[8 + offset].toInt()
+        var stateBool = ((stateByte and 128) != 128)
+
+        //val event = new DigitalEvent(CNXConnection.DIGITAL,id,stateBool)
+        //dispatchEvent(event)
+    }
+
+    private fun handleAnalogPacket(data:ByteArray, offset:Int) {
+        // TODO: implement
+        var id = data[7 + offset].toInt() + 1
+        var value: Int
+        when(data[5 + offset].toInt()) {
+            3 -> value = data[8 + offset].toInt()
+            4 -> value = data[8 + offset] * 256 + data[9 + offset]
+            5 -> {
+                id = id * 256 + data[8 + offset].toInt()
+                value = data[9 + offset] * 256 + data[10 + offset]
+            }
+            else -> return
+        }
+        //eventAnalog = new AnalogEvent(CNXConnection.ANALOG, id, value)
+        //dispatchEvent(eventAnalog)
+    }
+
+    private fun handleSerialPacket1(data:ByteArray, offset:Int, type:Int) {
+        // TODO: implement
+        var msg = ""
+        val id: Int = data[7 + offset] * 256 + data[8 + offset] + 1
+        val n = data[5 + offset] - 4
+        var j = 10 + offset
+        var i = 0
+
+        while(i++ < n) {
+            msg += data[j++].toChar()
+        }
+        //eventSerial = new SerialEvent(CNXConnection.SERIAL, id, msg)
+        //dispatchEvent(eventSerial)
+    }
+
+    private fun handleSerialPacket2(data:ByteArray, offset:Int, type:Int) {
+        // TODO: implement
+        var msg = ""
+        val id = data[7 + offset].toInt() + 1
+        val n = data[5 + offset] - 2
+        var j = 8 + offset
+        var i = 0
+        while(i++ < n) {
+            msg += data[j++].toChar()
+        }
+        //eventSerial = new SerialEvent(CNXConnection.SERIAL, id, msg)
+        //dispatchEvent(eventSerial)
+    }
+
+    private fun handleSerialPacket3(data:ByteArray, offset:Int, type:Int) {
+        // TODO: implement
+        if(data[7 + offset].toInt() == 35) {
+            var i = 8 + offset
+            var j = i + (data[5 + offset] - 2)
+            while(j > i) {
+                var msg = ""
+                var id = 0
+                while(data[i] >= 48 && data[i] <= 57) {
+                    id = id * 10 + (data[i++] - 48)
+                }
+                i++
+                while(i < j && data[i].toInt() != 13) {
+                    msg += msg + data[i++].toChar()
+                }
+                //eventSerial = new SerialEvent(CNXConnection.SERIAL,id, msg)
+                //dispatchEvent(eventSerial)
+                i++
+                i++
+            }
+        }
+    }
+
+    private fun handleEndOfQueryPacket(data:ByteArray, offset:Int) {
+        // TODO: implement
+        val i = data[7 + offset].toInt()
+        if (i == 0 || i == 31) {
+            //val event = ClearAllEvent(CNXConnection.ALLCLEAR);
+            //dispatchEvent(event)
+        } else {
+            //SendEndOfQueryResponse()
+        }
+    }
+
+    private fun handleDataPacket(data: ByteArray) {
+        var offset = 0
+        var extraData = 0
+
+        if(data[6].toInt() == 32)
+        {
+            extraData = data[7].toInt()
+            offset = 3
+        }
+
+        if(data[5] > 0)
+        {
+            when(data[6 + offset].toInt()) {
+                0  -> handleDigitalPacket(data, offset)
+                1  -> handleAnalogPacket(data, offset)
+                20 -> handleAnalogPacket(data, offset)
+                21 -> handleSerialPacket1(data, offset, 0)
+                18 -> handleSerialPacket2(data, offset, 1)
+                2  -> handleSerialPacket3(data, offset, 2)
+                3  -> handleEndOfQueryPacket(data, offset)
+            }
+        }
+    }
+
+    private fun hasCnxConnection() : Boolean {
+        // TODO: implement
+        return true
+    }
+
+    private fun sendConnectMessage() {
+        // TODO: implement
+    }
+
+    private fun cnxDisconnect() {
+        // TODO: implement
+    }
+
+    private fun onConnect() {
+        // TODO: implement
+    }
+
+    private fun onDisconnect() {
+        // TODO: implement
+        //if (this.connected)
+        //    this.close
+        //if (hasCnxConnection()) {
+        //    DisconnectEvent
+        //}
+    }
 }

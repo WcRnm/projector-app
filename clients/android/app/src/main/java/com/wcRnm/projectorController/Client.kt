@@ -1,10 +1,8 @@
 package com.wcRnm.projectorController
 
 import android.os.AsyncTask
-import android.widget.Button
-import android.widget.TextView
-//import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.lang.Exception
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
@@ -14,37 +12,27 @@ enum class ConnectionStatus {
     DISCONNECTED, CONNECTED, CONNECTING, DISCONNECTING
 }
 typealias StatusCallback = (status: ConnectionStatus) -> Unit
+typealias ErrorCallback = (error: String, e: Exception) -> Unit
+
+class ClientCallbacks(val onStatusChange: StatusCallback, val onError: ErrorCallback)
 
 const val DEFAULT_HOST          = "10.0.2.2" // Android emulator IP for development workstation
 const val DEFAULT_PORT          = 41794
-const val CONNECTION_TIMEOUT    = 5000
+const val READ_TIMEOUT          = 1000
 const val CONNECT_TIMEOUT       = 5000
 
-class Client : AsyncTask<Void, Void, Void> {
+class Client(private val callbacks: ClientCallbacks, host: String?) : AsyncTask<Void, Void, Void>() {
     private var host                        = DEFAULT_HOST
     private var port                        = DEFAULT_PORT
-    private var cbStatus : StatusCallback
     private var socket:    Socket           = Socket()
+    private val projector: IProjector       = InfocusIN2128HDx()
 
     var status:    ConnectionStatus = ConnectionStatus.DISCONNECTED
         private set
 
-    constructor(cbStatus: StatusCallback) {
-        this.cbStatus           = cbStatus
-        this.socket.soTimeout   = CONNECTION_TIMEOUT
-    }
-
-    constructor(host: String?, cbStatus: StatusCallback) {
+    init {
         this.host               = host?: DEFAULT_HOST
-        this.cbStatus           = cbStatus
-        this.socket.soTimeout   = CONNECTION_TIMEOUT
-    }
-
-    constructor(host: String, port: Int, cbStatus: StatusCallback) {
-        this.host               = host
-        this.port               = port
-        this.cbStatus           = cbStatus
-        this.socket.soTimeout   = CONNECTION_TIMEOUT
+        this.socket.soTimeout   = READ_TIMEOUT
     }
 
     fun connect() {
@@ -68,41 +56,46 @@ class Client : AsyncTask<Void, Void, Void> {
         try {
             socket.connect(InetSocketAddress(this.host, this.port), CONNECT_TIMEOUT)
 
-            //val byteArrayOutputStream = ByteArrayOutputStream(1024)
-            //var buffer: Array<Byte> = Array(1024)
-
-            //var bytesRead: Int
+            var buffer   = ByteArray(0)
             val inStream = socket.getInputStream()
-            val outStream = socket.getOutputStream()
 
             this.setStatus(ConnectionStatus.CONNECTED)
 
-            outStream.write(1)
-            inStream.read()
+            var timerStart = System.currentTimeMillis() - HEARTBEAT_INTERVAL - 1
+            while (true) {
+                val now = System.currentTimeMillis()
+                if (now - timerStart > HEARTBEAT_INTERVAL) {
+                    sendMessage(projector.heartbeat)
+                    timerStart = System.currentTimeMillis()
+                }
+                try {
+                    val data = inStream.readBytes()
+                    buffer += data
+                    val len = projector.nextPacketLength(buffer)
 
-            /*
-             * notice: inputStream.read() will block if no data return
-             */
-            //while ((bytesRead = inStream.read(buffer)) != -1) {
-                //byteArrayOutputStream.write(buffer, 0, bytesRead);
-                //response += byteArrayOutputStream.toString("UTF-8");
-            //}
-
+                    if (len > 0) {
+                        val packet = buffer.take(len).toByteArray()
+                        buffer = buffer.drop(len).toByteArray()
+                        projector.handlePacket(packet)
+                    }
+                } catch (e: SocketTimeoutException) {
+                    // read timeout
+                    continue
+                }
+            }
         } catch (e: UnknownHostException) {
-            // TODO Auto-generated catch block
-            e.printStackTrace()
+            this.callbacks.onError("Unknown host", e)
         } catch (e: SocketTimeoutException) {
-            e.printStackTrace()
+            // connect timeout
+            this.callbacks.onError("Connect timeout", e)
         } catch (e: IOException) {
-            // TODO Auto-generated catch block
             e.printStackTrace()
+            this.callbacks.onError(e.toString(), e)
         } finally {
             this.setStatus(ConnectionStatus.DISCONNECTING)
             try {
                 socket.close()
             } catch (e: IOException) {
-                // TODO Auto-generated catch block
-                e.printStackTrace()
             }
         }
 
@@ -118,7 +111,11 @@ class Client : AsyncTask<Void, Void, Void> {
     }
 
     private fun setStatus(status: ConnectionStatus) {
-        this.cbStatus(status)
+        this.callbacks.onStatusChange(status)
+    }
+
+    private fun sendMessage(msg: ByteArray) {
+        socket.getOutputStream().write(msg)
     }
 
 }

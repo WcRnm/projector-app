@@ -1,6 +1,16 @@
+import time
+import math
 import socket
 
 import constants as c
+
+
+def ms():
+    return math.floor(time.time_ns() / 1000000)
+
+
+def dt(startMs):
+    return ms() - startMs
 
 
 class ProjectorSim:
@@ -16,41 +26,32 @@ class ProjectorSim:
             s.listen()
 
             print("Listening on port ", self.port)
-
             while True:
                 pending = bytearray()
                 conn, addr = s.accept()
                 try:
                     with conn:
                         print('Connected to ', addr)
+                        start = ms()
                         while True:
                             data = conn.recv(64)
-                            if not data:
+                            if len(data) is 0:
+                                print('{0:6} Client disconnect'.format(dt(start)))
                                 break
 
                             # append data to pending messages
                             for b in data:
                                 pending.append(b)
 
-                            while self.handle_message(pending):
+                            while self.handle_message(dt(start), pending):
                                 continue
+                except Exception as e:
+                    print('{0:6} Exception: {1}'.format(dt(start), e))
                 finally:
                     conn.close()
 
-      #def read_packet(self, data):
-      #   if len(data) < 3:
-      #      return None
-
-      #   _loc1_ = data.pop(0)
-      #   _loc2_ = data.pop(1)
-      #   _loc3_ = _loc1_ * 256 + _loc2_
-      #   if(m_buffer.length < _loc3_ + 3):
-      #      return None
-      #   var _loc4_:Array = m_buffer.splice(0,_loc3_ + 3)
-      #   return _loc4_
-
-    def handle_message(self, data):
-        print('   Got {} bytes'.format(len(data)))
+    def handle_message(self, dt, data):
+        print('{0:6} recv {1} bytes'.format(dt, len(data)))
 
         while len(data) > 0:
             data.pop(0)

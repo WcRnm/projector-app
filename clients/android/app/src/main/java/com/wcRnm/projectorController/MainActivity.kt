@@ -6,11 +6,11 @@ import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.TextView
 import androidx.preference.PreferenceManager
 
 import kotlinx.android.synthetic.main.activity_main.*
+import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
 
         this.txtStatus = findViewById(R.id.textview_connectionStatus)
 
-        onConnectionStatus(ConnectionStatus.DISCONNECTED)
+        onStatusChange(ConnectionStatus.DISCONNECTED)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun onConnectionStatus(status: ConnectionStatus) {
+    private fun onStatusChange(status: ConnectionStatus) {
         connStatus = status
         when (status) {
             ConnectionStatus.DISCONNECTED  -> {
@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
 
                         if (host == "") host = DEFAULT_HOST
 
-                        client = Client(host, ::onConnectionStatus)
+                        client = Client(ClientCallbacks(::onStatusChange, ::onError), host)
                         client?.connect()
                     }, 1000)
             }
@@ -71,6 +71,9 @@ class MainActivity : AppCompatActivity() {
                 this.setUiText(this.txtStatus, R.string.status_disconnecting)
             }
         }
+    }
+
+    private fun onError(error: String, e: Exception) {
     }
 
     private fun setUiText(textView: TextView?, resId: Int) {
