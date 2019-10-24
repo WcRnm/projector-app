@@ -1,6 +1,7 @@
 package com.wcRnm.projectorController
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
@@ -48,7 +49,8 @@ class MainActivity : AppCompatActivity() {
         connStatus = status
         when (status) {
             ConnectionStatus.DISCONNECTED  -> {
-                this.setUiText(this.txtStatus, R.string.status_disconnected)
+                this.setUiText(txtStatus, R.string.status_disconnected)
+                this.setUiTextColor(txtStatus, Color.RED)
 
                 Handler().postDelayed(
                     {
@@ -62,13 +64,16 @@ class MainActivity : AppCompatActivity() {
                     }, 1000)
             }
             ConnectionStatus.CONNECTED     -> {
-                this.setUiText(this.txtStatus, R.string.status_connected)
+                this.setUiText(txtStatus, R.string.status_connected)
+                this.setUiTextColor(txtStatus, Color.GREEN)
             }
             ConnectionStatus.CONNECTING    -> {
-                this.setUiText(this.txtStatus, R.string.status_connecting)
+                this.setUiText(txtStatus, R.string.status_connecting)
+                this.setUiTextColor(txtStatus, Color.CYAN)
             }
             ConnectionStatus.DISCONNECTING -> {
-                this.setUiText(this.txtStatus, R.string.status_disconnecting)
+                this.setUiText(txtStatus, R.string.status_disconnecting)
+                this.setUiTextColor(txtStatus, Color.YELLOW)
             }
         }
     }
@@ -78,5 +83,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun setUiText(textView: TextView?, resId: Int) {
         textView?.post(java.lang.Runnable { textView.setText(resId) })
+    }
+
+    private fun setUiTextColor(textView: TextView?, color: Int) {
+        textView?.post(java.lang.Runnable { textView.setTextColor(color) })
     }
 }
