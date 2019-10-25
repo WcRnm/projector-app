@@ -47,9 +47,9 @@ class ProjectorSim:
                     with conn:
                         self.conn = conn
                         self.start = ms()
-                        self.log('Connected to {}'.format(addr)
+                        self.log('Connected to {}'.format(addr))
 
-                        conn.send(ProjectorSim.connect_request())
+                        conn.sendall(ProjectorSim.connect_request())
 
                         while True:
                             data = conn.recv(64)
@@ -76,7 +76,7 @@ class ProjectorSim:
 
     def send_message(self, msg):
         if self.conn is not None:
-            self.conn.send(msg)
+            self.conn.sendall(msg)
 
     def handle_message(self, pending):
         self.log('recv {} bytes'.format(len(pending)))
