@@ -47,7 +47,7 @@ class ProjectorSim:
                     with conn:
                         self.conn = conn
                         self.start = ms()
-                        self.log('Connected to ', addr)
+                        self.log('Connected to {}'.format(addr)
 
                         conn.send(ProjectorSim.connect_request())
 
@@ -64,13 +64,15 @@ class ProjectorSim:
                             while self.handle_message(pending):
                                 continue
 
-                except Exception as e:
-                    self.log('Exception: {}'.format(e))
                 except ProtocolError as e:
                     self.log('ProtocolError: {}'.format(e.message))
+                except IOError as e:
+                    self.log('IOError: {}'.format(e))
                 finally:
                     conn.close()
                     self.conn = None
+
+                self.log('Connection Done')
 
     def send_message(self, msg):
         if self.conn is not None:
@@ -89,7 +91,7 @@ class ProjectorSim:
         return False
 
     @staticmethod
-    def read_packet(self, pending):
+    def read_packet(pending):
         if len(pending) < 3:
             return None
 
@@ -98,8 +100,8 @@ class ProjectorSim:
         if len(pending) < msg_len:
             return None
 
-        packet = pending[0:(msg_len-1)]
-        del pending[0:(msg_len-1)]
+        packet = pending[0:msg_len]
+        del pending[0:msg_len]
 
         return packet
 
