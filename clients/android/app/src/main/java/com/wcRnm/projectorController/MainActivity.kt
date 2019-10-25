@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
 
                         if (host == "") host = DEFAULT_HOST
 
-                        client = Client(ClientCallbacks(::onStatusChange, ::onError), host)
+                        client = Client(ClientCallbacks(::onStatusChange, ::onError, ::onConnectionInfo), host)
                         client?.connect()
                     }, 1000)
             }
@@ -81,8 +81,16 @@ class MainActivity : AppCompatActivity() {
     private fun onError(error: String, e: Exception) {
     }
 
+    private fun onConnectionInfo(server: String, client: String) {
+        setUiText(findViewById(R.id.textview_projector_addr), server)
+        setUiText(findViewById(R.id.textview_client_addr), client)
+    }
+
     private fun setUiText(textView: TextView?, resId: Int) {
         textView?.post(java.lang.Runnable { textView.setText(resId) })
+    }
+    private fun setUiText(textView: TextView?, text: String) {
+        textView?.post(java.lang.Runnable { textView.text = text })
     }
 
     private fun setUiTextColor(textView: TextView?, color: Int) {

@@ -13,8 +13,9 @@ enum class ConnectionStatus {
 }
 typealias StatusCallback = (status: ConnectionStatus) -> Unit
 typealias ErrorCallback = (error: String, e: Exception) -> Unit
+typealias ConnectionCallback = (server: String, client: String) -> Unit
 
-class ClientCallbacks(val onStatusChange: StatusCallback, val onError: ErrorCallback)
+class ClientCallbacks(val onStatusChange: StatusCallback, val onError: ErrorCallback, val onConnectionInfo: ConnectionCallback)
 
 const val DEFAULT_HOST          = "10.0.2.2" // Android emulator IP for development workstation
 const val DEFAULT_PORT          = 41794
@@ -55,6 +56,8 @@ class Client(private val callbacks: ClientCallbacks, host: String?) : AsyncTask<
     override fun doInBackground(vararg params: Void?): Void? {
         try {
             socket.connect(InetSocketAddress(this.host, this.port), CONNECT_TIMEOUT)
+
+            callbacks.onConnectionInfo(socket.inetAddress.toString(), socket.localAddress.toString())
 
             var buffer   = ByteArray(0)
             val inStream = socket.getInputStream()

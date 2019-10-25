@@ -14,8 +14,8 @@
     <string name="switch_lamp">Lamp</string>
     <string name="connection_status">Connection</string>
 
-    <string name="projector_addr">Server</string>
-    <string name="client_addr">Client</string>
+    <string name="projector_addr">Projector IP</string>
+    <string name="client_addr">Client IP</string>
     <string name="addr_localhost">127.0.0.1</string>
 
     <string name="lamp_hours_label">Lamp Hours</string>
