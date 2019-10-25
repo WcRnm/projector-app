@@ -1,24 +1,20 @@
 package com.wcRnm.projectorController
 
 import android.util.Log
+import java.io.OutputStream
 
 private const val TAG: String = "Projector"
 
 const val DEFAULT_IPID          = 3
 const val DEFAULT_HANDLE        = 0
+const val HEARTBEAT_INTERVAL = 9000
+
+class DisconnectException(message:String): Exception(message)
 
 interface IProjector {
-    val heartbeat:           ByteArray
-    val connectMessage:      ByteArray
-    val endOfQueryResponse:  ByteArray
-    val updateRequestPacket: ByteArray
-    fun digitalCommand(stdCmd:Int, value:Boolean, extraParam:Int = 0) : ByteArray
-
-    fun nextPacketLength(avail: ByteArray) : Int
-    fun handlePacket(data: ByteArray)
+    fun handleData(data: ByteArray, dataLen: Int, outputStream: OutputStream)
+    fun idleTasks(outputStream: OutputStream)
 }
-
-const val HEARTBEAT_INTERVAL = 6000
 
 const val CMD_NONE          = 0
 const val CMD_POWER_ON      = 1
@@ -79,17 +75,34 @@ const val CMD_KEYPAD_EXT3_T = 55
 const val CMD_KEYPAD_EXT4_T = 56
 
 class InfocusIN2128HDx : IProjector {
-    private val handle: Int = DEFAULT_HANDLE
-    private val ipid:   Int = DEFAULT_IPID
+    private var handle: Int = DEFAULT_HANDLE  // projector ID
+    private val ipid:   Int = DEFAULT_IPID    // client ID
 
-    override val heartbeat = byteArrayOfInts(
+    private var cnxConnected            = false
+    private var supportsRepeatDigitals  = false
+    private var supportsHeartbeat       = false
+
+    private var idleTicks = System.currentTimeMillis()
+    private var buffer    = ByteArray(0)
+
+    override fun idleTasks(outputStream: OutputStream) {
+        if (cnxConnected && supportsHeartbeat) {
+            val now = System.currentTimeMillis()
+            if ((now - idleTicks) > HEARTBEAT_INTERVAL) {
+                outputStream.write(heartbeat)
+                idleTicks = System.currentTimeMillis()
+            }
+        }
+    }
+
+    private val heartbeat = byteArrayOfInts(
         13,
         0,
         2,
         handle / 256,
         handle % 256
     )
-    override val connectMessage = byteArrayOfInts(
+    private val connectMessage = byteArrayOfInts(
         1,
         0,
         7,
@@ -102,7 +115,7 @@ class InfocusIN2128HDx : IProjector {
         64
     )
 
-    override val endOfQueryResponse = byteArrayOfInts(
+    private val endOfQueryResponse = byteArrayOfInts(
         5,
         0,
         5,
@@ -113,7 +126,7 @@ class InfocusIN2128HDx : IProjector {
         29
     )
 
-    override val updateRequestPacket = byteArrayOfInts(
+    private val updateRequestPacket = byteArrayOfInts(
         5,
         0,
         5,
@@ -124,7 +137,7 @@ class InfocusIN2128HDx : IProjector {
         30
     )
 
-    override fun digitalCommand(stdCmd:Int, value:Boolean, extraParam:Int) : ByteArray
+    fun digitalCommand(stdCmd:Int, value:Boolean, extraParam:Int) : ByteArray
     {
         val extraLen:Byte = if (extraParam > 0) 3 else 0
         val iCmd = stdCmd-1
@@ -158,7 +171,20 @@ class InfocusIN2128HDx : IProjector {
 
     private fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { pos -> ints[pos].toByte() }
 
-    override fun nextPacketLength(avail: ByteArray) : Int {
+    override fun handleData(data: ByteArray, dataLen: Int, outStream: OutputStream) {
+        Log.d(TAG, "++handleData(${dataLen})")
+        buffer += data.take(dataLen)
+        val len = nextPacketLength(buffer)
+
+        if (len > 0) {
+            val packet = buffer.take(len).toByteArray()
+            buffer = buffer.drop(len).toByteArray()
+            handlePacket(packet, outStream)
+        }
+        Log.d(TAG, "--handleData")
+    }
+
+    private fun nextPacketLength(avail: ByteArray) : Int {
         if(avail.size < 3) {
             return 0
         }
@@ -170,36 +196,70 @@ class InfocusIN2128HDx : IProjector {
         return len + 3
     }
 
-    override fun handlePacket(data: ByteArray) {
-        Log.d(TAG, "++handlePacket size:$data.size")
-        val msgId = data[0].toInt()
-        val len = data.size
+    private fun handlePacket(packet: ByteArray, outputStream: OutputStream) {
+        val msgId = packet[0].toInt()
+
+        Log.d(TAG, "++handlePacket(id:${msgId} len:${packet.size})")
 
         when (msgId) {
-            2    -> {
-                if (!hasCnxConnection())
-                    if (len > 5) {
-                        onConnect()
-                    }
-            }
-            3    -> onDisconnect()
-            4    -> onDisconnect()
-            5    -> handleDataPacket(data)
-            14   -> {
-                // TODO: implement
-                // if missed heart beat response ...
-                // HeartbeatEvent
-            }
+            2    -> handleConnect(packet, outputStream)
+            3    -> handleDisconnect()
+            4    -> handleDisconnect()
+            5    -> handleDataPacket(packet, outputStream)
+            14   -> handleHeartbeat()
             15   -> {
-                if (len > 3) {
-                    when(data[3].toInt()) {
-                        0 -> cnxDisconnect()
-                        2 -> if (!hasCnxConnection()) sendConnectMessage()
+                if (packet.size > 3) {
+                    when(packet[3].toInt()) {
+                        0 -> handleDisconnect()
+                        2 -> {
+                            if (!cnxConnected)
+                                outputStream.write(connectMessage)
+                        }
                     }
                 }
             }
             else -> { /* ignore */ }
         }
+        Log.d(TAG, "--handlePacket")
+    }
+
+    private fun handleConnect(data:ByteArray, outputStream: OutputStream) {
+        Log.d(TAG, "++handleConnect")
+
+        if (cnxConnected)
+            return
+
+        if (data.size < 6)
+            return
+
+        this.handle = data[3] * 256 + data[4]
+
+        if (data.size >= 7) {
+            supportsRepeatDigitals = (1 == (1 and data[6].toInt()))
+            supportsHeartbeat      = supportsRepeatDigitals
+
+            Log.d(TAG, "handleConnect: supports heartbeat")
+        }
+
+        outputStream.write(updateRequestPacket)
+
+        idleTicks    = System.currentTimeMillis()
+        cnxConnected = true
+
+        Log.d(TAG, "--handleConnect")
+    }
+
+    private fun handleDisconnect() {
+        Log.d(TAG, "++handleDisconnect")
+        if (cnxConnected) {
+            cnxConnected = false
+        }
+        throw DisconnectException("Server initiated disconnect")
+    }
+
+    private fun handleHeartbeat() {
+        Log.d(TAG, "handleHeartbeat")
+        // TODO: if missed heart beat response ...
     }
 
     private fun handleDigitalPacket(data:ByteArray, offset:Int) {
@@ -302,7 +362,7 @@ class InfocusIN2128HDx : IProjector {
         }
     }
 
-    private fun handleDataPacket(data: ByteArray) {
+    private fun handleDataPacket(data: ByteArray, outputStream: OutputStream) {
         Log.d(TAG, "handleDataPacket")
 
         var offset = 0
@@ -326,31 +386,5 @@ class InfocusIN2128HDx : IProjector {
                 3  -> handleEndOfQueryPacket(data, offset)
             }
         }
-    }
-
-    private fun hasCnxConnection() : Boolean {
-        // TODO: implement
-        return true
-    }
-
-    private fun sendConnectMessage() {
-        // TODO: implement
-    }
-
-    private fun cnxDisconnect() {
-        // TODO: implement
-    }
-
-    private fun onConnect() {
-        // TODO: implement
-    }
-
-    private fun onDisconnect() {
-        // TODO: implement
-        //if (this.connected)
-        //    this.close
-        //if (hasCnxConnection()) {
-        //    DisconnectEvent
-        //}
     }
 }

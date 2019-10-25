@@ -62,30 +62,23 @@ class Client(private val callbacks: ClientCallbacks, host: String?) : AsyncTask<
 
             callbacks.onConnectionInfo(socket.inetAddress.toString(), socket.localAddress.toString())
 
-            var buffer   = ByteArray(0)
             val inStream = socket.getInputStream()
+            val outStream = socket.getOutputStream()
+
+            val buffer = ByteArray(1024)
 
             this.setStatus(ConnectionStatus.CONNECTED)
 
-            var timerStart = System.currentTimeMillis() - HEARTBEAT_INTERVAL - 1
             while (true) {
-                val now = System.currentTimeMillis()
-                if (now - timerStart > HEARTBEAT_INTERVAL) {
-                    sendMessage(projector.heartbeat)
-                    timerStart = System.currentTimeMillis()
-                }
-                try {
-                    val data = inStream.readBytes()
-                    buffer += data
-                    val len = projector.nextPacketLength(buffer)
+                projector.idleTasks(outStream)
 
-                    if (len > 0) {
-                        val packet = buffer.take(len).toByteArray()
-                        buffer = buffer.drop(len).toByteArray()
-                        projector.handlePacket(packet)
-                    }
+                try {
+                    val n = inStream.read(buffer)
+                    if (n == -1)
+                        break
+                    projector.handleData(buffer, n, outStream)
                 } catch (e: SocketTimeoutException) {
-                    Log.d(TAG, "read timeout")
+                    // Log.d(TAG, "read timeout")
                     // read timeout
                     continue
                 }
@@ -97,6 +90,8 @@ class Client(private val callbacks: ClientCallbacks, host: String?) : AsyncTask<
             this.callbacks.onError("Connect timeout", e)
         } catch (e: IOException) {
             e.printStackTrace()
+            this.callbacks.onError(e.toString(), e)
+        } catch (e: DisconnectException) {
             this.callbacks.onError(e.toString(), e)
         } finally {
             this.setStatus(ConnectionStatus.DISCONNECTING)
@@ -120,9 +115,4 @@ class Client(private val callbacks: ClientCallbacks, host: String?) : AsyncTask<
     private fun setStatus(status: ConnectionStatus) {
         this.callbacks.onStatusChange(status)
     }
-
-    private fun sendMessage(msg: ByteArray) {
-        socket.getOutputStream().write(msg)
-    }
-
 }
