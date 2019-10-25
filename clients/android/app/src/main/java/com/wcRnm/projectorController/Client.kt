@@ -1,12 +1,15 @@
 package com.wcRnm.projectorController
 
 import android.os.AsyncTask
+import android.util.Log
 import java.io.IOException
 import java.lang.Exception
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+
+private val TAG: String = Client::class.java.simpleName
 
 enum class ConnectionStatus {
     DISCONNECTED, CONNECTED, CONNECTING, DISCONNECTING
@@ -82,6 +85,7 @@ class Client(private val callbacks: ClientCallbacks, host: String?) : AsyncTask<
                         projector.handlePacket(packet)
                     }
                 } catch (e: SocketTimeoutException) {
+                    Log.d(TAG, "read timeout")
                     // read timeout
                     continue
                 }

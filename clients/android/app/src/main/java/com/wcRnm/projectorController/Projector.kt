@@ -1,5 +1,9 @@
 package com.wcRnm.projectorController
 
+import android.util.Log
+
+private const val TAG: String = "Projector"
+
 const val DEFAULT_IPID          = 3
 const val DEFAULT_HANDLE        = 0
 
@@ -167,6 +171,7 @@ class InfocusIN2128HDx : IProjector {
     }
 
     override fun handlePacket(data: ByteArray) {
+        Log.d(TAG, "++handlePacket size:$data.size")
         val msgId = data[0].toInt()
         val len = data.size
 
@@ -198,7 +203,8 @@ class InfocusIN2128HDx : IProjector {
     }
 
     private fun handleDigitalPacket(data:ByteArray, offset:Int) {
-        // TODO: implement
+        Log.d(TAG, "handleDigitalPacket")
+
         if(data[5 + offset].toInt() != 3) {
             return
         }
@@ -212,7 +218,8 @@ class InfocusIN2128HDx : IProjector {
     }
 
     private fun handleAnalogPacket(data:ByteArray, offset:Int) {
-        // TODO: implement
+        Log.d(TAG, "handleAnalogPacket")
+
         var id = data[7 + offset].toInt() + 1
         var value: Int
         when(data[5 + offset].toInt()) {
@@ -229,7 +236,8 @@ class InfocusIN2128HDx : IProjector {
     }
 
     private fun handleSerialPacket1(data:ByteArray, offset:Int, type:Int) {
-        // TODO: implement
+        Log.d(TAG, "handleSerialPacket1")
+
         var msg = ""
         val id: Int = data[7 + offset] * 256 + data[8 + offset] + 1
         val n = data[5 + offset] - 4
@@ -244,7 +252,8 @@ class InfocusIN2128HDx : IProjector {
     }
 
     private fun handleSerialPacket2(data:ByteArray, offset:Int, type:Int) {
-        // TODO: implement
+        Log.d(TAG, "handleSerialPacket2")
+
         var msg = ""
         val id = data[7 + offset].toInt() + 1
         val n = data[5 + offset] - 2
@@ -258,7 +267,8 @@ class InfocusIN2128HDx : IProjector {
     }
 
     private fun handleSerialPacket3(data:ByteArray, offset:Int, type:Int) {
-        // TODO: implement
+        Log.d(TAG, "handleSerialPacket3")
+
         if(data[7 + offset].toInt() == 35) {
             var i = 8 + offset
             var j = i + (data[5 + offset] - 2)
@@ -281,7 +291,8 @@ class InfocusIN2128HDx : IProjector {
     }
 
     private fun handleEndOfQueryPacket(data:ByteArray, offset:Int) {
-        // TODO: implement
+        Log.d(TAG, "handleEndOfQueryPacket")
+
         val i = data[7 + offset].toInt()
         if (i == 0 || i == 31) {
             //val event = ClearAllEvent(CNXConnection.ALLCLEAR);
@@ -292,6 +303,8 @@ class InfocusIN2128HDx : IProjector {
     }
 
     private fun handleDataPacket(data: ByteArray) {
+        Log.d(TAG, "handleDataPacket")
+
         var offset = 0
         var extraData = 0
 
