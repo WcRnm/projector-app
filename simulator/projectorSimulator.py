@@ -32,7 +32,7 @@ class ProjectorSim:
         self.start = 0
 
     def log(self, msg):
-        print('{0:6} {}'.format((ms() - self.start), msg))
+        print('{0:6} {1}'.format((ms() - self.start), msg))
 
     def run(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
