@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
@@ -13,6 +14,8 @@ import androidx.preference.PreferenceManager
 import kotlinx.android.synthetic.main.activity_main.*
 import java.lang.Exception
 
+private val TAG: String = MainActivity::class.java.simpleName
+
 class MainActivity : AppCompatActivity() {
 
     private var txtStatus  : TextView?          = null
@@ -21,12 +24,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "++onCreate")
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
         this.txtStatus = findViewById(R.id.textview_connectionStatus)
 
         onStatusChange(ConnectionStatus.DISCONNECTED)
+        Log.d(TAG, "--onCreate")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -46,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onStatusChange(status: ConnectionStatus) {
+        Log.d(TAG, "onStatusChange: $status")
         connStatus = status
         when (status) {
             ConnectionStatus.DISCONNECTED  -> {
