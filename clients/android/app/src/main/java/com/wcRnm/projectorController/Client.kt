@@ -86,8 +86,9 @@ class Client(private val callbacks: ClientCallbacks, host: String?) : AsyncTask<
         } catch (e: UnknownHostException) {
             this.callbacks.onError("Unknown host", e)
         } catch (e: SocketTimeoutException) {
-            // connect timeout
             this.callbacks.onError("Connect timeout", e)
+        } catch (e: java.net.ConnectException) {
+            this.callbacks.onError("Connect exception", e)
         } catch (e: IOException) {
             e.printStackTrace()
             this.callbacks.onError(e.toString(), e)
