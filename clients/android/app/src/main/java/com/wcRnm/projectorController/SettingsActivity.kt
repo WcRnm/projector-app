@@ -3,8 +3,9 @@ package com.wcRnm.projectorController
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import com.wcRnm.projectorController.R
+import androidx.preference.PreferenceManager
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -21,6 +22,14 @@ class SettingsActivity : AppCompatActivity() {
     class SettingsFragment : PreferenceFragmentCompat() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
+
+            val prefs = PreferenceManager.getDefaultSharedPreferences(this.context)
+
+            // Set the read-only properties as summaries
+            findPreference<Preference>(StringProp.ERROR.key)     ?.summary = prefs.getString(StringProp.ERROR.key, "?")
+            findPreference<Preference>(StringProp.SW_VERSION.key)?.summary = prefs.getString(StringProp.SW_VERSION.key, "?")
+            findPreference<Preference>(StringProp.RESOLUTION.key)?.summary = prefs.getString(StringProp.RESOLUTION.key, "?")
+
         }
     }
 

@@ -1,5 +1,6 @@
 package com.wcRnm.projectorController
 
+import android.content.Context
 import android.os.AsyncTask
 import android.util.Log
 import java.io.IOException
@@ -25,11 +26,11 @@ const val DEFAULT_PORT          = 41794
 const val READ_TIMEOUT          = 1000
 const val CONNECT_TIMEOUT       = 5000
 
-class Client(private val callbacks: ClientCallbacks, host: String?) : AsyncTask<Void, Void, Void>() {
+class Client(context: Context, private val callbacks: ClientCallbacks, host: String?) : AsyncTask<Void, Void, Void>() {
     private var host                        = DEFAULT_HOST
     private var port                        = DEFAULT_PORT
     private var socket:    Socket           = Socket()
-    private val projector: IProjector       = InfocusIN2128HDx()
+    private val projector: IProjector       = InfocusIN2128HDx(context)
 
     var status:    ConnectionStatus = ConnectionStatus.DISCONNECTED
         private set

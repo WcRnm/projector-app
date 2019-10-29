@@ -34,4 +34,10 @@
     <string name="pref_conn_timeout">Connection Timeout</string>
     <string name="pref_conn_timeout_default">5000</string>
 
+    <string name="projector_info_header">Projector Information</string>
+    <!-- Read-only Preferences -->
+    <string name="pref_version">Firmware</string>
+    <string name="pref_error">Error</string>
+    <string name="pref_resolution">Resolution</string>
+
 </resources>

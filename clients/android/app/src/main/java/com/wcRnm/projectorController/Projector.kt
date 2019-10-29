@@ -1,6 +1,8 @@
 package com.wcRnm.projectorController
 
+import android.content.Context
 import android.util.Log
+import androidx.preference.PreferenceManager
 import java.io.OutputStream
 import java.util.*
 
@@ -36,7 +38,7 @@ class ProjectorTaskItem(val task: ProjectorTask, val id: Int, val bVal: Boolean,
     }
 }
 
-class InfocusIN2128HDx : IProjector {
+class InfocusIN2128HDx(context: Context) : IProjector {
     private var handle: Int = DEFAULT_HANDLE  // projector ID
     private val ipid:   Int = DEFAULT_IPID    // client ID
 
@@ -47,7 +49,7 @@ class InfocusIN2128HDx : IProjector {
     private var idleTicks   = System.currentTimeMillis()
     private var buffer      = ByteArray(0)
     private val taskQ       = ArrayDeque<ProjectorTaskItem>()
-    private val props       = ProjectorProperties()
+    private val props       = ProjectorProperties(PreferenceManager.getDefaultSharedPreferences(context))
 
     override fun idleTasks(outputStream: OutputStream) {
         //Log.d(TAG, "++idleTasks(${cnxConnected}, n:${taskQ.size})")
@@ -114,11 +116,9 @@ class InfocusIN2128HDx : IProjector {
     }
 
     private fun handlePacket(packet: ByteArray, outputStream: OutputStream) {
-        val msgId = packet[0].toInt()
-
         //Log.d(TAG, "++handlePacket(id:${msgId} len:${packet.size})")
 
-        when (msgId) {
+        when (packet[0].toInt()) {
             2    -> handleConnectResponse(packet)
             3    -> handleDisconnect()
             4    -> handleDisconnect()

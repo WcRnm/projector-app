@@ -24,6 +24,34 @@
             app:defaultValue="@string/pref_conn_host_default"
             app:useSimpleSummaryProvider="true" />
 
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/projector_info_header">
+        <EditTextPreference
+            app:key="pref_error"
+            app:title="@string/pref_error"
+            app:enabled="false"
+            app:selectable="false"
+            app:persistent="false"
+            app:shouldDisableView="false"
+            />
+        <EditTextPreference
+            app:key="pref_resolution"
+            app:title="@string/pref_resolution"
+            app:enabled="false"
+            app:selectable="false"
+            app:persistent="false"
+            app:shouldDisableView="false"
+            />
+        <EditTextPreference
+            app:key="pref_version"
+            app:title="@string/pref_version"
+            app:enabled="false"
+            app:selectable="false"
+            app:persistent="false"
+            app:shouldDisableView="false"
+            />
     </PreferenceCategory>
 
 </PreferenceScreen>

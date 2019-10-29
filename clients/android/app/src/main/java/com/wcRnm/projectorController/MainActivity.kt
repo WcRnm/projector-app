@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
 
                         if (host == "") host = DEFAULT_HOST
 
-                        client = Client(ClientCallbacks(::onStatusChange, ::onError, ::onConnectionInfo), host)
+                        client = Client(this, ClientCallbacks(::onStatusChange, ::onError, ::onConnectionInfo), host)
                         client?.connect()
                     }, 1000)
             }
