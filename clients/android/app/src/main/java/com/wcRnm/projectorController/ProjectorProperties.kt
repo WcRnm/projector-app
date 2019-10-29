@@ -24,7 +24,7 @@ enum class StringProp(val id: Int, val key: String) {
     NETWORK_NETMASK     (4785, ""), // "255.255.252.0"
     ID_4786             (4786, ""), // "10.4.0.1"
     ID_4787             (4787, ""), // "10.4.0.1"
-    NETWORK_MAC_ADDRESS (4788, ""), // 00:e0:47:26:2a:7a
+    NETWORK_MAC_ADDRESS (4788, "pref_conn_mac"), // 00:e0:47:26:2a:7a
     ID_4789             (4789, ""), // "10.0.167.101"
     ID_4790             (4790, ""), // "5"
     NETWORK_PORT        (4791, ""), // "41797"
@@ -67,15 +67,15 @@ enum class BoolProp(val id: Int) {
 }
 
 enum class IntProp(val id: Int) {
-    ID_257(257),
+    ID_257(257),    // 30
 
-    ID_5000(5000),
-    ID_5001(5001),
-    ID_5002(5002),
-    ID_5003(5003),
+    ID_5000(5000),  // 0
+    ID_5001(5001),  // 32494
+    ID_5002(5002),  // 32494
+    ID_5003(5003),  // -258
 
-    ID_5011(5011),
-    ID_5012(5012),
+    ID_5011(5011),  // 32509
+    ID_5012(5012),  // 63
 }
 
 class ProjectorProperties(val prefs: SharedPreferences) {
@@ -118,6 +118,7 @@ class ProjectorProperties(val prefs: SharedPreferences) {
             StringProp.ERROR.id      -> setProperty(StringProp.ERROR, s)
             StringProp.SW_VERSION.id -> setProperty(StringProp.SW_VERSION, s)
             StringProp.RESOLUTION.id -> setProperty(StringProp.RESOLUTION, s)
+            StringProp.NETWORK_MAC_ADDRESS.id -> setProperty(StringProp.NETWORK_MAC_ADDRESS, s)
         }
     }
 

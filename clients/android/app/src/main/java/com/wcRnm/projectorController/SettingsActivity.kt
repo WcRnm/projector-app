@@ -30,6 +30,8 @@ class SettingsActivity : AppCompatActivity() {
             findPreference<Preference>(StringProp.SW_VERSION.key)?.summary = prefs.getString(StringProp.SW_VERSION.key, "?")
             findPreference<Preference>(StringProp.RESOLUTION.key)?.summary = prefs.getString(StringProp.RESOLUTION.key, "?")
 
+            findPreference<Preference>(StringProp.NETWORK_MAC_ADDRESS.key)?.summary = prefs.getString(StringProp.NETWORK_MAC_ADDRESS.key, "?")
+
         }
     }
 
