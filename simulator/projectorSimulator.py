@@ -206,6 +206,7 @@ class ProjectorSim:
             "050008000005141394003f",
         ]
 
+
 def main(model=c.INFOCUS_IN2128HDx):
     sim = ProjectorSim(model)
 
