@@ -3,8 +3,11 @@
     <words>
       <w>addr</w>
       <w>digitals</w>
+      <w>hdmi</w>
       <w>infocus</w>
       <w>ipid</w>
+      <w>lightcast</w>
+      <w>netmask</w>
       <w>textview</w>
     </words>
   </dictionary>
