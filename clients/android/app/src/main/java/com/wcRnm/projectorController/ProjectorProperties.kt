@@ -1,7 +1,5 @@
 package com.wcRnm.projectorController
 
-import android.content.SharedPreferences
-import android.util.Log
 import android.util.SparseArray
 import android.util.SparseBooleanArray
 import android.util.SparseIntArray
@@ -78,9 +76,11 @@ enum class IntProp(val id: Int) {
     ID_5012(5012),  // 63
 }
 
-class ProjectorProperties(val prefs: SharedPreferences) {
+class StringVal(val prop: StringProp, val value: String)
+class BoolVal(val prop: BoolProp, val value: Boolean)
+class IntVal(val prop: IntProp, val value: Int)
 
-    private val editor = prefs.edit()
+class ProjectorProperties() {
 
     private val bMap = SparseBooleanArray(64)
     private val iMap = SparseIntArray(64)
@@ -103,32 +103,42 @@ class ProjectorProperties(val prefs: SharedPreferences) {
             iMap.put(p.id, 0)
     }
 
-    fun set(id: Int, b: Boolean) {
-        bMap.put(id, b)
+    fun set(id: Int, b: Boolean): BoolVal? {
+        for (p in BoolProp.values())
+            if (id == p.id) {
+                bMap.put(id, b)
+                return BoolVal(p, b)
+            }
+        return null
     }
 
-    fun set(id: Int, i: Int) {
-        iMap.put(id, i)
+    fun set(id: Int, i: Int): IntVal? {
+        for (p in IntProp.values())
+            if (id == p.id) {
+                iMap.put(id, i)
+                return IntVal(p, i)
+            }
+        return null
     }
 
-    fun set(id: Int, s: String) {
-        sMap.put(id, s)
-
-        when (id) {
-            StringProp.ERROR.id      -> setProperty(StringProp.ERROR, s)
-            StringProp.SW_VERSION.id -> setProperty(StringProp.SW_VERSION, s)
-            StringProp.RESOLUTION.id -> setProperty(StringProp.RESOLUTION, s)
-            StringProp.NETWORK_MAC_ADDRESS.id -> setProperty(StringProp.NETWORK_MAC_ADDRESS, s)
-        }
+    fun set(id: Int, s: String): StringVal? {
+        for (p in StringProp.values())
+            if (id == p.id) {
+                sMap.put(id, s)
+                return StringVal(p, s)
+            }
+        return null
     }
 
-    private fun setProperty(p: StringProp, s: String) {
-        //editor.
-        //val pm = PreferenceManager.findPreference()
-        editor.putString(p.key, s)
-        editor.apply()
+    fun get(p: BoolProp): Boolean {
+        return bMap.get(p.id)
+    }
 
-        Log.d(TAG, "setProperty($p, ${prefs.getString(p.key, "not found")})")
-        //val text = prefs.getString(p.key, "not found")
+    fun get(p: IntProp): Int {
+        return iMap.get(p.id)
+    }
+
+    fun get(p: StringProp): String {
+        return sMap.get(p.id)
     }
 }

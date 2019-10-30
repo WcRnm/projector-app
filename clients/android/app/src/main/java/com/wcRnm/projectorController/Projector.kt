@@ -1,8 +1,6 @@
 package com.wcRnm.projectorController
 
-import android.content.Context
 import android.util.Log
-import androidx.preference.PreferenceManager
 import java.io.OutputStream
 import java.util.*
 
@@ -13,6 +11,10 @@ const val DEFAULT_HANDLE        = 0
 const val HEARTBEAT_INTERVAL = 9000
 
 class DisconnectException(message:String): Exception(message)
+
+typealias OnPropertyChange = (sv: StringVal?, iv: IntVal?, bv: BoolVal?) -> Unit
+
+class ProjectorCallbacks(val onPropertyChange: OnPropertyChange)
 
 interface IProjector {
     fun handleData(data: ByteArray, dataLen: Int, outputStream: OutputStream)
@@ -38,9 +40,11 @@ class ProjectorTaskItem(val task: ProjectorTask, val id: Int, val bVal: Boolean,
     }
 }
 
-class InfocusIN2128HDx(context: Context) : IProjector {
+class InfocusIN2128HDx(callbacks: ProjectorCallbacks) : IProjector {
     private var handle: Int = DEFAULT_HANDLE  // projector ID
     private val ipid:   Int = DEFAULT_IPID    // client ID
+
+    private var mCallbacks = callbacks
 
     private var cnxConnected            = false
     private var supportsRepeatDigitals  = false
@@ -49,7 +53,7 @@ class InfocusIN2128HDx(context: Context) : IProjector {
     private var idleTicks   = System.currentTimeMillis()
     private var buffer      = ByteArray(0)
     private val taskQ       = ArrayDeque<ProjectorTaskItem>()
-    private val props       = ProjectorProperties(PreferenceManager.getDefaultSharedPreferences(context))
+    private val props       = ProjectorProperties()
 
     override fun idleTasks(outputStream: OutputStream) {
         //Log.d(TAG, "++idleTasks(${cnxConnected}, n:${taskQ.size})")
@@ -61,16 +65,14 @@ class InfocusIN2128HDx(context: Context) : IProjector {
                 Log.d(TAG, task.toString())
 
                 when (task.task) {
-                    ProjectorTask.SEND_CONNECT_MSG -> {
-                        outputStream.write(msgConnect(ipid))
-                    }
+                    ProjectorTask.SEND_CONNECT_MSG -> outputStream.write(msgConnect(ipid))
                     ProjectorTask.REQUEST_INFO     -> {
                         outputStream.write(msgUpdateRequest(handle))
                         //outputStream.write(msgDigitalCommand(handle, CMD_CS_PORT))
                     }
-                    ProjectorTask.DIGITAL_VALUE     -> props.set(task.id, task.bVal)
-                    ProjectorTask.ANALOG_VALUE      -> props.set(task.id, task.iVal)
-                    ProjectorTask.SERIAL_VALUE      -> props.set(task.id, task.sVal)
+                    ProjectorTask.DIGITAL_VALUE     -> mCallbacks.onPropertyChange(null, null, props.set(task.id, task.bVal))
+                    ProjectorTask.ANALOG_VALUE      -> mCallbacks.onPropertyChange(null, props.set(task.id, task.iVal), null)
+                    ProjectorTask.SERIAL_VALUE      -> mCallbacks.onPropertyChange(props.set(task.id, task.sVal), null, null)
                 }
             }
 
@@ -89,7 +91,7 @@ class InfocusIN2128HDx(context: Context) : IProjector {
         //Log.d(TAG, "--idleTasks")
     }
 
-    override fun handleData(data: ByteArray, dataLen: Int, outStream: OutputStream) {
+    override fun handleData(data: ByteArray, dataLen: Int, outputStream: OutputStream) {
         //Log.d(TAG, "++handleData(${dataLen})")
         buffer += data.take(dataLen)
         var len = nextPacketLength(buffer)
@@ -97,7 +99,7 @@ class InfocusIN2128HDx(context: Context) : IProjector {
         while (len > 0) {
             val packet = buffer.take(len).toByteArray()
             buffer = buffer.drop(len).toByteArray()
-            handlePacket(packet, outStream)
+            handlePacket(packet, outputStream)
             len = nextPacketLength(buffer)
         }
         //Log.d(TAG, "--handleData")
@@ -217,7 +219,7 @@ class InfocusIN2128HDx(context: Context) : IProjector {
         taskQ.add(ProjectorTaskItem(ProjectorTask.ANALOG_VALUE, id, value))
     }
 
-    private fun handleSerialPacket1(data:ByteArray, offset:Int, type:Int) {
+    private fun handleSerialPacket1(data:ByteArray, offset:Int) {
         //Log.d(TAG, "handleSerialPacket1")
 
         var msg = ""
@@ -233,7 +235,7 @@ class InfocusIN2128HDx(context: Context) : IProjector {
         taskQ.add(ProjectorTaskItem(ProjectorTask.SERIAL_VALUE, id, msg))
     }
 
-    private fun handleSerialPacket2(data:ByteArray, offset:Int, type:Int) {
+    private fun handleSerialPacket2(data:ByteArray, offset:Int) {
         //Log.d(TAG, "handleSerialPacket2")
 
         var msg = ""
@@ -248,7 +250,7 @@ class InfocusIN2128HDx(context: Context) : IProjector {
         taskQ.add(ProjectorTaskItem(ProjectorTask.SERIAL_VALUE, id, msg))
     }
 
-    private fun handleSerialPacket3(data:ByteArray, offset:Int, type:Int) {
+    private fun handleSerialPacket3(data:ByteArray, offset:Int) {
         Log.d(TAG, "handleSerialPacket3")
 
         if(data[7 + offset].toInt() == 35) {
@@ -285,15 +287,7 @@ class InfocusIN2128HDx(context: Context) : IProjector {
 
     private fun handleDataPacket(data: ByteArray, os: OutputStream) {
         //Log.d(TAG, "handleDataPacket")
-
-        var offset = 0
-        var extraData = 0
-
-        if(data[6].toInt() == 32)
-        {
-            extraData = data[7].toInt()
-            offset = 3
-        }
+        val offset = if (data[6].toInt() == 32) 3 else 0
 
         if(data[5] > 0)
         {
@@ -301,9 +295,9 @@ class InfocusIN2128HDx(context: Context) : IProjector {
                 0  -> handleDigitalPacket(data, offset)
                 1  -> handleAnalogPacket(data, offset)
                 20 -> handleAnalogPacket(data, offset)
-                21 -> handleSerialPacket1(data, offset, 0)
-                18 -> handleSerialPacket2(data, offset, 1)
-                2  -> handleSerialPacket3(data, offset, 2)
+                21 -> handleSerialPacket1(data, offset)
+                18 -> handleSerialPacket2(data, offset)
+                2  -> handleSerialPacket3(data, offset)
                 3  -> handleEndOfQueryPacket(data, offset, os)
             }
         }

@@ -31,6 +31,7 @@
 
             <Switch
                 android:id="@+id/switch_power"
+                android:layout_width="0dp"
                 android:layout_weight="0.5"
                 android:text="@string/switch_power"
                 android:textSize="24sp" />
@@ -41,6 +42,7 @@
 
             <Switch
                 android:id="@+id/switch_lamp"
+                android:layout_width="0dp"
                 android:layout_weight="0.5"
                 android:text="@string/switch_lamp"
                 android:textSize="24sp" />
@@ -52,7 +54,7 @@
 
             <TextView
                 android:id="@+id/textview_projector_message"
-                android:layout_width="81dp"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.5"
                 android:minLines="4"
@@ -64,16 +66,57 @@
         <TableRow android:padding="5dp">
 
             <TextView
-                android:id="@+id/textview_lamp_hrs_label"
+                android:id="@+id/textview_connection"
+                android:layout_width="0dp"
                 android:layout_weight="0.5"
-                android:text="@string/lamp_hours_label"
+                android:layout_marginEnd="8dp"
+                android:text="@string/connection_status"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                />
+
+            <TextView
+                android:id="@+id/textview_connectionStatus"
+                android:layout_weight="0.5"
+                android:text="@string/status_disconnected"
                 android:textSize="18sp" />
+
+        </TableRow>
+
+        <TableRow android:padding="5dp">
+
+            <TextView
+                android:id="@+id/textview_lamp_hrs_label"
+                android:layout_width="0dp"
+                android:layout_weight="0.5"
+                android:layout_marginEnd="8dp"
+                android:text="@string/lamp_hours_label"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                />
 
             <TextView
                 android:id="@+id/textview_lamp_hrs"
-                android:layout_weight="0.75"
-                android:gravity="end"
-                android:text="@string/lamp_hours"
+                android:layout_weight="0.5"
+                android:textSize="18sp" />
+
+        </TableRow>
+
+        <TableRow android:padding="5dp">
+
+            <TextView
+                android:id="@+id/textview_projector_error_label"
+                android:layout_width="0dp"
+                android:layout_weight="0.5"
+                android:layout_marginEnd="8dp"
+                android:text="@string/pref_error"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                />
+
+            <TextView
+                android:id="@+id/textview_projector_error"
+                android:layout_weight="0.5"
                 android:textSize="18sp" />
 
         </TableRow>
@@ -82,15 +125,17 @@
 
             <TextView
                 android:id="@+id/textview_projector_addr_label"
+                android:layout_width="0dp"
                 android:layout_weight="0.5"
+                android:layout_marginEnd="8dp"
                 android:text="@string/projector_addr"
-                android:textSize="18sp" />
+                android:textSize="18sp"
+                android:textStyle="bold"
+                />
 
             <TextView
                 android:id="@+id/textview_projector_addr"
-                android:layout_weight="0.75"
-                android:gravity="end"
-                android:text="@string/addr_localhost"
+                android:layout_weight="0.5"
                 android:textSize="18sp" />
 
         </TableRow>
@@ -99,33 +144,79 @@
 
             <TextView
                 android:id="@+id/textview_client_addr_label"
+                android:layout_width="0dp"
                 android:layout_weight="0.5"
+                android:layout_marginEnd="8dp"
                 android:text="@string/client_addr"
-                android:textSize="18sp" />
+                android:textSize="18sp"
+                android:textStyle="bold"
+                />
 
             <TextView
                 android:id="@+id/textview_client_addr"
-                android:layout_weight="0.75"
-                android:gravity="end"
-                android:text="@string/addr_localhost"
-                android:textSize="18sp" />
+                android:layout_weight="0.5"
+                android:textSize="18sp"
+                />
 
         </TableRow>
 
         <TableRow android:padding="5dp">
 
             <TextView
-                android:id="@+id/textview_connection"
+                android:id="@+id/textview_projector_mac_label"
+                android:layout_width="0dp"
                 android:layout_weight="0.5"
-                android:text="@string/connection_status"
-                android:textSize="18sp" />
+                android:layout_marginEnd="8dp"
+                android:text="@string/pref_conn_mac"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                />
 
             <TextView
-                android:id="@+id/textview_connectionStatus"
-                android:layout_weight="0.75"
-                android:gravity="end"
-                android:text="@string/status_disconnected"
-                android:textSize="18sp" />
+                android:id="@+id/textview_projector_mac"
+                android:layout_weight="0.5"
+                android:textSize="18sp"
+                />
+
+        </TableRow>
+
+        <TableRow android:padding="5dp">
+
+            <TextView
+                android:id="@+id/textview_projector_resolution_label"
+                android:layout_width="0dp"
+                android:layout_weight="0.5"
+                android:layout_marginEnd="8dp"
+                android:text="@string/pref_resolution"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                />
+
+            <TextView
+                android:id="@+id/textview_projector_resolution"
+                android:layout_weight="0.5"
+                android:textSize="18sp"
+                />
+
+        </TableRow>
+
+        <TableRow android:padding="5dp">
+
+            <TextView
+                android:id="@+id/textview_projector_firmware_label"
+                android:layout_width="0dp"
+                android:layout_weight="0.5"
+                android:layout_marginEnd="8dp"
+                android:text="@string/pref_version"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                />
+
+            <TextView
+                android:id="@+id/textview_projector_firmware"
+                android:layout_weight="0.5"
+                android:textSize="18sp"
+                />
 
         </TableRow>
 

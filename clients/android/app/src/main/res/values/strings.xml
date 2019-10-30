@@ -2,8 +2,6 @@
     <string name="app_name">Projector Controller</string>
     <string name="action_settings">Settings</string>
 
-    <string name="host_address">Projector IP/Hostname</string>
-
     <string name="status_connected">Connected</string>
     <string name="status_connecting">Connecting</string>
     <string name="status_disconnected">Disconnected</string>
@@ -12,16 +10,17 @@
     <!-- Widgets -->
     <string name="switch_power">Power</string>
     <string name="switch_lamp">Lamp</string>
-    <string name="connection_status">Connection</string>
 
-    <string name="projector_addr">Projector IP</string>
-    <string name="client_addr">Client IP</string>
-    <string name="addr_localhost">127.0.0.1</string>
+    <string name="connection_status">Connection:</string>
+    <string name="projector_addr">Projector IP:</string>
+    <string name="client_addr">Client IP:</string>
+    <string name="lamp_hours_label">Lamp Hours:</string>
+    <string name="pref_error">Error Status:</string>
+    <string name="pref_version">Firmware:</string>
+    <string name="pref_resolution">Resolution:</string>
+    <string name="pref_conn_mac">MAC Addr:</string>
 
-    <string name="lamp_hours_label">Lamp Hours</string>
-    <string name="lamp_hours">0</string>
-
-    <string name="projector_message_default">PROJECTOR MESSAGE HERE. YOU WILL EVENTUALLY SEE SOMETHING LIKE "Warming up"</string>
+    <string name="projector_message_default">PROJECTOR MESSAGE HERE..."</string>
 
     <!-- Settings -->
     <string name="title_activity_settings">Settings</string>
@@ -30,17 +29,4 @@
     <string name="connection_header">Connection</string>
     <string name="pref_conn_host">Projector IP/Hostname</string>
     <string name="pref_conn_host_default">10.0.2.2</string>
-
-    <string name="pref_conn_timeout">Connection Timeout</string>
-    <string name="pref_conn_timeout_default">5000</string>
-
-    <!-- Projector Status -->
-    <string name="projector_status_header">Projector Status</string>
-    <string name="pref_error">Error Status</string>
-
-    <!-- Projector Information -->
-    <string name="projector_info_header">Projector Information</string>
-    <string name="pref_version">Firmware</string>
-    <string name="pref_resolution">Resolution</string>
-    <string name="pref_conn_mac">MAC Address</string>
 </resources>
