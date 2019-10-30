@@ -47,14 +47,14 @@ class Client(context: Context, private val callbacks: ClientCallbacks, host: Str
     }
 
     fun disconnect() {
-        if (status == ConnectionStatus.CONNECTED) {
+        //if (status == ConnectionStatus.CONNECTED) {
             try {
                 socket.close()
             } catch (e: IOException) {
                 // TODO Auto-generated catch block
                 e.printStackTrace()
             }
-        }
+        //}
     }
 
     override fun doInBackground(vararg params: Void?): Void? {
@@ -70,7 +70,7 @@ class Client(context: Context, private val callbacks: ClientCallbacks, host: Str
 
             this.setStatus(ConnectionStatus.CONNECTED)
 
-            while (true) {
+            while (!isCancelled) {
                 projector.idleTasks(outStream)
 
                 try {
