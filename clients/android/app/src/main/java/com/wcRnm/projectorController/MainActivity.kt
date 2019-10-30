@@ -181,21 +181,21 @@ class MainActivity : AppCompatActivity() {
         }
         if (bv != null) {
             val tvId:Int = when (bv.prop) {
-                BoolProp.ID_1    -> 0
-                BoolProp.ID_5    -> 0
-                BoolProp.ID_6    -> 0
-                BoolProp.ID_22   -> 0
-                BoolProp.ID_4847 -> 0
-                BoolProp.ID_4848 -> 0
-                BoolProp.ID_4849 -> 0
-                BoolProp.ID_4850 -> 0
-                BoolProp.ID_4861 -> 0
-                BoolProp.ID_4862 -> 0
-                BoolProp.ID_5115 -> 0
-                BoolProp.ID_5210 -> 0
-                BoolProp.ID_5211 -> 0
-                BoolProp.ID_5213 -> 0
-                BoolProp.ID_5217 -> 0
+                BoolProp.ID_1    -> R.id.textview_bool_1
+                BoolProp.ID_5    -> R.id.textview_bool_5
+                BoolProp.ID_6    -> R.id.textview_bool_6
+                BoolProp.ID_22   -> R.id.textview_bool_22
+                BoolProp.ID_4847 -> R.id.textview_bool_4847
+                BoolProp.ID_4848 -> R.id.textview_bool_4848
+                BoolProp.ID_4849 -> R.id.textview_bool_4849
+                BoolProp.ID_4850 -> R.id.textview_bool_4850
+                BoolProp.ID_4861 -> R.id.textview_bool_4861
+                BoolProp.ID_4862 -> R.id.textview_bool_4862
+                BoolProp.ID_5115 -> R.id.textview_bool_5115
+                BoolProp.ID_5210 -> R.id.textview_bool_5210
+                BoolProp.ID_5211 -> R.id.textview_bool_5211
+                BoolProp.ID_5213 -> R.id.textview_bool_5213
+                BoolProp.ID_5217 -> R.id.textview_bool_5217
             }
             if (tvId > 0)
                 setUiText(tvId, bv.value.toString())
