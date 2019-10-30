@@ -29,4 +29,42 @@
     <string name="connection_header">Connection</string>
     <string name="pref_conn_host">Projector IP/Hostname</string>
     <string name="pref_conn_host_default">10.0.2.2</string>
+
+    <!-- Unknown Properties -->
+    <string name="unknown_properties">Unknown Properties</string>
+    <string name="unknown_text_5">Text 5</string>
+    <string name="unknown_text_4745">Text 4745</string>
+    <string name="unknown_text_4746">Text 4746</string>
+    <string name="unknown_text_4747">Text 4747</string>
+    <string name="unknown_text_4748">Text 4748</string>
+    <string name="unknown_text_4790">Text 4790</string>
+    <string name="unknown_text_4794">Text 4794</string>
+    <string name="unknown_text_4795">Text 4795</string>
+    <string name="unknown_text_4796">Text 4796</string>
+    <string name="unknown_text_4797">Text 4797</string>
+    <string name="unknown_text_4799">Text 4799</string>
+
+    <string name="unknown_analog_257">Analog 257</string>
+    <string name="unknown_analog_5000">Analog 5000</string>
+    <string name="unknown_analog_5001">Analog 5001</string>
+    <string name="unknown_analog_5002">Analog 5002</string>
+    <string name="unknown_analog_5003">Analog 5003</string>
+    <string name="unknown_analog_5011">Analog 5011</string>
+    <string name="unknown_analog_5012">Analog 5012</string>
+
+    <string name="unknown_bool_1">Bool 1</string>
+    <string name="unknown_bool_5">Bool 5</string>
+    <string name="unknown_bool_6">Bool 6</string>
+    <string name="unknown_bool_22">Bool 22</string>
+    <string name="unknown_bool_4847">Bool 4847</string>
+    <string name="unknown_bool_4848">Bool 4848</string>
+    <string name="unknown_bool_4849">Bool 4849</string>
+    <string name="unknown_bool_4850">Bool 4850</string>
+    <string name="unknown_bool_4861">Bool 4861</string>
+    <string name="unknown_bool_4862">Bool 4862</string>
+    <string name="unknown_bool_5115">Bool 5115</string>
+    <string name="unknown_bool_5210">Bool 5210</string>
+    <string name="unknown_bool_5211">Bool 5211</string>
+    <string name="unknown_bool_5213">Bool 5213</string>
+    <string name="unknown_bool_5217">Bool 5217</string>
 </resources>

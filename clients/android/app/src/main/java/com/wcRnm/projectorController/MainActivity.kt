@@ -140,11 +140,11 @@ class MainActivity : AppCompatActivity() {
         if (sv != null) {
             val tvId:Int = when (sv.prop) {
                 StringProp.ERROR                -> R.id.textview_projector_error
-                StringProp.ID_5                 -> 0
-                StringProp.ID_4745              -> 0
-                StringProp.ID_4746              -> 0
-                StringProp.ID_4747              -> 0
-                StringProp.ID_4748              -> 0
+                StringProp.ID_5                 -> R.id.textview_unknown_text_5
+                StringProp.ID_4745              -> R.id.textview_unknown_text_4745
+                StringProp.ID_4746              -> R.id.textview_unknown_text_4746
+                StringProp.ID_4747              -> R.id.textview_unknown_text_4747
+                StringProp.ID_4748              -> R.id.textview_unknown_text_4748
                 StringProp.ID_4754              -> 0
                 StringProp.NETWORK_IP_ADDRESS   -> 0
                 StringProp.NETWORK_NETMASK      -> 0
@@ -152,25 +152,53 @@ class MainActivity : AppCompatActivity() {
                 StringProp.ID_4787              -> 0
                 StringProp.NETWORK_MAC_ADDRESS  -> R.id.textview_projector_mac
                 StringProp.ID_4789              -> 0
-                StringProp.ID_4790              -> 0
+                StringProp.ID_4790              -> R.id.textview_unknown_text_4790
                 StringProp.NETWORK_PORT         -> 0
-                StringProp.ID_4794              -> 0
-                StringProp.ID_4795              -> 0
-                StringProp.ID_4796              -> 0
-                StringProp.ID_4797              -> 0
+                StringProp.ID_4794              -> R.id.textview_unknown_text_4794
+                StringProp.ID_4795              -> R.id.textview_unknown_text_4795
+                StringProp.ID_4796              -> R.id.textview_unknown_text_4796
+                StringProp.ID_4797              -> R.id.textview_unknown_text_4797
                 StringProp.RESOLUTION           -> R.id.textview_projector_resolution
-                StringProp.ID_4799              -> 0
+                StringProp.ID_4799              -> R.id.textview_unknown_text_4799
                 StringProp.SW_VERSION           -> R.id.textview_projector_firmware
                 else                            -> 0
             }
-
-            setUiText(tvId, sv.value)
+            if (tvId > 0)
+                setUiText(tvId, sv.value)
         }
         if (iv != null) {
-
+            val tvId:Int = when (iv.prop) {
+                IntProp.ID_257  -> R.id.textview_analog_257
+                IntProp.ID_5000 -> R.id.textview_analog_5000
+                IntProp.ID_5001 -> R.id.textview_analog_5001
+                IntProp.ID_5002 -> R.id.textview_analog_5002
+                IntProp.ID_5003 -> R.id.textview_analog_5003
+                IntProp.ID_5011 -> R.id.textview_analog_5011
+                IntProp.ID_5012 -> R.id.textview_analog_5012
+            }
+            if (tvId > 0)
+                setUiText(tvId, iv.value.toString())
         }
         if (bv != null) {
-
+            val tvId:Int = when (bv.prop) {
+                BoolProp.ID_1    -> 0
+                BoolProp.ID_5    -> 0
+                BoolProp.ID_6    -> 0
+                BoolProp.ID_22   -> 0
+                BoolProp.ID_4847 -> 0
+                BoolProp.ID_4848 -> 0
+                BoolProp.ID_4849 -> 0
+                BoolProp.ID_4850 -> 0
+                BoolProp.ID_4861 -> 0
+                BoolProp.ID_4862 -> 0
+                BoolProp.ID_5115 -> 0
+                BoolProp.ID_5210 -> 0
+                BoolProp.ID_5211 -> 0
+                BoolProp.ID_5213 -> 0
+                BoolProp.ID_5217 -> 0
+            }
+            if (tvId > 0)
+                setUiText(tvId, bv.value.toString())
         }
     }
 
