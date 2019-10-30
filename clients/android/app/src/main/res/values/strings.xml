@@ -11,14 +11,14 @@
     <string name="switch_power">Power</string>
     <string name="switch_lamp">Lamp</string>
 
-    <string name="connection_status">Connection:</string>
-    <string name="projector_addr">Projector IP:</string>
-    <string name="client_addr">Client IP:</string>
-    <string name="lamp_hours_label">Lamp Hours:</string>
-    <string name="pref_error">Error Status:</string>
-    <string name="pref_version">Firmware:</string>
-    <string name="pref_resolution">Resolution:</string>
-    <string name="pref_conn_mac">MAC Addr:</string>
+    <string name="connection_status">Connection</string>
+    <string name="projector_addr">Projector IP</string>
+    <string name="client_addr">Client IP</string>
+    <string name="lamp_hours_label">Lamp Hours</string>
+    <string name="pref_error">Error Status</string>
+    <string name="pref_version">Firmware</string>
+    <string name="pref_resolution">Resolution</string>
+    <string name="pref_conn_mac">MAC Addr</string>
 
     <string name="projector_message_default">PROJECTOR MESSAGE HERE..."</string>
 
