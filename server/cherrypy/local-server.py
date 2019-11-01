@@ -1,6 +1,7 @@
 import cherrypy
 from cherrypy.process import plugins
 
+import mimetypes
 import os
 import socket
 import threading
@@ -14,6 +15,17 @@ projector = None
 
 PROJECTOR_ADDR = '127.0.0.1'
 PROJECTOR_PORT = 41794
+
+
+def _setup_mimetypes():
+    """Pre-initialize global mimetype map."""
+    if not mimetypes.inited:
+        mimetypes.init()
+    mimetypes.types_map['.js'] = 'application/javascript'
+    mimetypes.types_map['.css'] = 'text/css'
+
+
+_setup_mimetypes()
 
 
 class Projector(plugins.SimplePlugin):
