@@ -6,6 +6,8 @@ import socket
 import threading
 import time
 
+from projector import ProjectorInfo
+
 debug = True
 
 projector = None
@@ -21,6 +23,7 @@ class Projector(plugins.SimplePlugin):
         global projector
         projector = self
 
+        self.info = ProjectorInfo()
         self.t = None
         self.running = False
         self.status = [
@@ -62,7 +65,7 @@ class Projector(plugins.SimplePlugin):
         if self.sock is not None:
             try:
                 data = self.sock.recv(1024)
-                print("read {}".format(len(data)))
+                self.info.handle_data(data)
             except IOError:
                 self.disconnect()
 
