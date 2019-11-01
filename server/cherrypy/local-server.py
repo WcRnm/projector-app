@@ -1,6 +1,6 @@
 import cherrypy
 from cherrypy.process import plugins
-import json
+
 import os
 import threading
 import time
@@ -57,8 +57,9 @@ class LocalServer(object):
         return self.get_page('index.html')
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def projector(self):
-        return json.dumps(projector.state)
+        return projector.state
 
 
 if __name__ == '__main__':
