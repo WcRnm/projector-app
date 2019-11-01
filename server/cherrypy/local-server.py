@@ -27,7 +27,7 @@ class Projector(plugins.SimplePlugin):
         self.t = None
         self.running = False
         self.status = [
-            {'location': 'Sanctuary', 'online': False, 'lampHours': 0, 'serviceHours': 0}
+            {'location': 'Sanctuary', 'online': False, 'lampHours': 0, 'serviceHours': 0, 'msgCount': 0}
         ]
         self.sock = None
 
@@ -56,6 +56,7 @@ class Projector(plugins.SimplePlugin):
                 self.sock.close()
             finally:
                 self.sock = None
+                self.info.reset()
                 projector.status[0]['online'] = False
 
     def process(self):
@@ -66,8 +67,13 @@ class Projector(plugins.SimplePlugin):
             try:
                 data = self.sock.recv(1024)
                 self.info.handle_data(data)
+
             except IOError:
                 self.disconnect()
+
+        self.status[0]['lampHours'] = self.info.lamp_hours
+        self.status[0]['serviceHours'] = self.info.service_hours
+        self.status[0]['msgCount'] = self.info.msg_count
 
     @staticmethod
     def worker():
