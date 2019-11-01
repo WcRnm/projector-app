@@ -1,17 +1,23 @@
 
+ONLINE = 'online'
+LOCATION = 'location'
+LAMP_HRS = 'lampHrs'
+SERVICE_HRS = 'serviceHrs'
+MSG_COUNT = 'msgCount'
+
+
 class ProjectorInfo:
     def __init__(self):
-        self.location = 'Sanctuary'
-        self.lamp_hours = 0
-        self.service_hours = 0
-        self.msg_count = 0
+        self.status = {LOCATION: 'Sanctuary', ONLINE: False, LAMP_HRS: 0, SERVICE_HRS: 0, MSG_COUNT: 0}
 
     def reset(self):
-        self.lamp_hours = 0
-        self.service_hours = 0
-        self.msg_count = 0
+        self.status[LAMP_HRS] = 0
+        self.status[MSG_COUNT] = 0
+        self.status[SERVICE_HRS] = 0
+        self.status[ONLINE] = False
 
     def handle_data(self, data):
         print("read {}".format(len(data)))
-        self.msg_count += 1
+        self.status[ONLINE] = True
+        self.status[MSG_COUNT] += 1
 
