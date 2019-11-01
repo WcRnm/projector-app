@@ -27,7 +27,7 @@
         app:layout_constraintVertical_bias="0.0">
 
 
-        <TableRow android:padding="5dp">
+        <!-- TableRow android:padding="5dp">
 
             <Switch
                 android:id="@+id/switch_power"
@@ -61,7 +61,7 @@
                 android:scrollHorizontally="false"
                 android:text="@string/projector_message_default"
                 android:textSize="18sp" />
-        </TableRow>
+        </TableRow -->
 
         <TableRow android:padding="5dp">
 
