@@ -2,12 +2,16 @@ import cherrypy
 from cherrypy.process import plugins
 
 import os
+import socket
 import threading
 import time
 
 debug = True
 
 projector = None
+
+PROJECTOR_ADDR = '127.0.0.1'
+PROJECTOR_PORT = 41794
 
 
 class Projector(plugins.SimplePlugin):
@@ -19,9 +23,10 @@ class Projector(plugins.SimplePlugin):
 
         self.t = None
         self.running = False
-        self.state = [
+        self.status = [
             {'location': 'Sanctuary', 'online': False, 'lampHours': 0, 'serviceHours': 0}
         ]
+        self.sock = None
 
     def start(self):
         self.running = True
@@ -32,14 +37,46 @@ class Projector(plugins.SimplePlugin):
     def stop(self):
         self.running = False
 
+    def connect(self):
+        try:
+            print("connect {}:{}".format(PROJECTOR_ADDR, PROJECTOR_PORT))
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.settimeout(1000)
+            self.sock.connect((PROJECTOR_ADDR, PROJECTOR_PORT))
+            projector.status[0]['online'] = True
+        except IOError as e:
+            self.disconnect()
+
+    def disconnect(self):
+        if self.sock is not None:
+            try:
+                self.sock.close()
+            finally:
+                self.sock = None
+                projector.status[0]['online'] = False
+
+    def process(self):
+        if self.sock is None:
+            self.connect()
+
+        if self.sock is not None:
+            try:
+                data = self.sock.recv(1024)
+                print("read {}".format(len(data)))
+            except IOError:
+                self.disconnect()
+
     @staticmethod
     def worker():
+        s = None
         while projector.running:
-            # TODO: manage projector connection
-            time.sleep(5)
+            time.sleep(1)
+            projector.process()
+
+        projector.disconect()
 
 
-class LocalServer(object):
+class ProjectorServer(object):
     def __init__(self):
         self.pages = {}
 
@@ -59,7 +96,7 @@ class LocalServer(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def projector(self):
-        return projector.state
+        return projector.status
 
 
 if __name__ == '__main__':
@@ -74,4 +111,4 @@ if __name__ == '__main__':
         }
     }
     Projector(cherrypy.engine).subscribe()
-    cherrypy.quickstart(LocalServer(), '/', conf)
+    cherrypy.quickstart(ProjectorServer(), '/', conf)
