@@ -264,7 +264,7 @@ class InfocusIN2128HDx(callbacks: ProjectorCallbacks) : IProjector {
                 }
                 i++
                 while(i < j && data[i].toInt() != 13) {
-                    msg += msg + data[i++].toChar()
+                    msg += data[i++].toChar()
                 }
 
                 taskQ.add(ProjectorTaskItem(ProjectorTask.SERIAL_VALUE, id, msg))
