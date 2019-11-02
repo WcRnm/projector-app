@@ -78,6 +78,10 @@ class Projector(plugins.SimplePlugin):
 
             except IOError:
                 self.disconnect()
+            except projector.ProjectorDisconnectError:
+                self.disconnect()
+
+        self.info.idle_tasks(self.sock)
 
     @staticmethod
     def worker():
