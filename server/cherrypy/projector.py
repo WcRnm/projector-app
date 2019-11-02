@@ -84,13 +84,12 @@ class ProjectorInfo:
             if TASK_CONNECT == task:
                 sock.send(self.msg_connect(self.ipid))
             elif TASK_REQUEST_INFO == task:
-                pass
+                sock.send(self.msg_update_request(self.handle))
             elif TASK_END_OF_QUERY == task:
-                pass
+                sock.send(self.msg_end_of_query_response(self.handle))
             elif TASK_VALUE == task:
                 LOG_D("  {} = {}".format(data_id, data_value))
                 self.status[data_id] = data_value
-                pass
 
     def handle_data(self, data):
         LOG_D("read {}".format(len(data)))
@@ -204,13 +203,13 @@ class ProjectorInfo:
             return
 
         data_id = data[8 + offset] * 256 + data[7 + offset]
-        data_id = (data_id and 32767) + 1 // (data_id & 0x7FFF) + 1
+        data_id = (data_id and 32767) + 1  # (data_id & 0x7FFF) + 1
         value = ((data[8 + offset] and 128) != 128) // 0x80
 
         self.tasks.put((TASK_VALUE, data_id, value))
 
     def handle_analog(self, data, offset):
-        data_id = data[7 + offset].toInt() + 1
+        data_id = data[7 + offset] + 1
         t = data[5 + offset]
         if 3 == t:
             value = data[8 + offset]
@@ -289,4 +288,30 @@ class ProjectorInfo:
             math.floor(ipid / 256),
             ipid % 256,
             64
+        ])
+
+    @staticmethod
+    def msg_end_of_query_response(handle):
+        return bytes([
+            5,
+            0,
+            5,
+            math.floor(handle / 256),
+            handle % 256,
+            2,
+            3,
+            29
+        ])
+
+    @staticmethod
+    def msg_update_request(handle):
+        return bytes([
+            5,
+            0,
+            5,
+            math.floor(handle / 256),
+            handle % 256,
+            2,
+            3,
+            30
         ])
