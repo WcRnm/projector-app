@@ -35,7 +35,7 @@ class Projector(plugins.SimplePlugin):
         global projector
         projector = self
 
-        self.info = ProjectorInfo()
+        self.info = ProjectorInfo('Sanctuary', 0)
         self.t = None
         self.running = False
         self.status = [self.info.status]
