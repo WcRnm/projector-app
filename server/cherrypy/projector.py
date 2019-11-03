@@ -1,6 +1,8 @@
 import queue
 import math
 
+from projector_info import *
+
 
 class ProjectorError(Exception):
     pass
@@ -11,11 +13,11 @@ class ProjectorDisconnectError(ProjectorError):
 
 
 # Tasks
-TASK_NONE = 0
-TASK_CONNECT = 1
-TASK_REQUEST_INFO = 2
-TASK_END_OF_QUERY = 3
-TASK_VALUE = 4
+TASK_NONE = 'none'
+TASK_CONNECT = 'connect'
+TASK_REQUEST_INFO = 'request-info'
+TASK_END_OF_QUERY = 'end-of-query'
+TASK_VALUE = 'value'
 
 
 class TaskQueue(queue.Queue):
@@ -32,13 +34,6 @@ class TaskQueue(queue.Queue):
         except queue.Empty:
             return TASK_NONE, 0, 0
 
-
-# Statuses
-ONLINE = 'online'
-LOCATION = 'location'
-LAMP_HRS = 'lampHrs'
-SERVICE_HRS = 'serviceHrs'
-MSG_COUNT = 'msgCount'
 
 # Capabilities
 SUPPORTS_HEARTBEAT = 'supports_heartbeat'
@@ -77,8 +72,8 @@ class ProjectorInfo:
 
     def idle_tasks(self, sock):
         while not self.tasks.empty():
-            task, data_id, data_value = self.tasks.safe_get()
-            LOG_D("task: {}".format(task))
+            task, data_id, data_value, value_type = self.tasks.safe_get()
+            # LOG_D("task: {}".format(task))
 
             # todo: handle tasks
             if TASK_CONNECT == task:
@@ -88,8 +83,14 @@ class ProjectorInfo:
             elif TASK_END_OF_QUERY == task:
                 sock.send(self.msg_end_of_query_response(self.handle))
             elif TASK_VALUE == task:
-                LOG_D("  {} = {}".format(data_id, data_value))
-                self.status[data_id] = data_value
+                name = get_id_name(data_id, value_type)
+                LOG_D("  {} = {}".format(name, data_value))
+                self.status[name] = data_value
+            else:
+                continue
+
+    def submit_task(self, task, data_id=0, data_value=0, value_type=None):
+        self.tasks.put((task, data_id, value_type, data_value))
 
     def handle_data(self, data):
         LOG_D("read {}".format(len(data)))
@@ -153,14 +154,14 @@ class ProjectorInfo:
             self.caps[SUPPORTS_HEARTBEAT] = b
 
         self.connected = True
-        self.tasks.put((TASK_REQUEST_INFO, 0, 0))
+        self.submit_task(TASK_REQUEST_INFO)
 
     def handle_disconnect(self, packet):
         LOG_D("disconnect")
         self.on_disconnect()
 
     def handle_data_packet(self, data):
-        LOG_D("data_packet")
+        # LOG_D("handle_data_packet")
 
         if data[5] > 0:
             offset = data[6] == 32 if 3 else 0
@@ -192,7 +193,7 @@ class ProjectorInfo:
                 self.on_disconnect()
             elif 2 == action:
                 if not self.connected:
-                    self.tasks.put((TASK_CONNECT, 0, 0))
+                    self.submit_task(TASK_CONNECT)
 
     def on_disconnect(self):
         self.reset()
@@ -206,7 +207,7 @@ class ProjectorInfo:
         data_id = (data_id and 32767) + 1  # (data_id & 0x7FFF) + 1
         value = ((data[8 + offset] and 128) != 128) // 0x80
 
-        self.tasks.put((TASK_VALUE, data_id, value))
+        self.submit_task(TASK_VALUE, data_id, DATA_BOOL, value)
 
     def handle_analog(self, data, offset):
         data_id = data[7 + offset] + 1
@@ -221,7 +222,7 @@ class ProjectorInfo:
         else:
             return
 
-        self.tasks.put((TASK_VALUE, data_id, value))
+        self.submit_task(TASK_VALUE, data_id, DATA_ANALOG, value)
 
     def handle_serial1(self, data, offset):
         msg = ""
@@ -236,7 +237,7 @@ class ProjectorInfo:
             i += 1
             j += 1
 
-        self.tasks.put((TASK_VALUE, data_id, msg))
+        self.submit_task(TASK_VALUE, data_id, DATA_TEXT, msg)
 
     def handle_serial2(self, data, offset):
         msg = ""
@@ -250,7 +251,7 @@ class ProjectorInfo:
             i += 1
             j += 1
 
-        self.tasks.put((TASK_VALUE, data_id, msg))
+        self.submit_task(TASK_VALUE, data_id, DATA_TEXT, msg)
 
     def handle_serial3(self, data, offset):
         if data[7 + offset] == 35:
@@ -268,12 +269,12 @@ class ProjectorInfo:
                     # todo: string append is inefficient - improve it!
                     msg += chr(data[i])
 
-                self.tasks.put((TASK_VALUE, data_id, msg))
+                self.submit_task(TASK_VALUE, data_id, DATA_TEXT, msg)
 
                 i += 2
 
     def handle_end_of_query(self, data, offset):
-        self.tasks.put(TASK_END_OF_QUERY)
+        self.submit_task(TASK_END_OF_QUERY)
 
     @staticmethod
     def msg_connect(ipid):
