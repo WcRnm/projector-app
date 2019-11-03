@@ -203,9 +203,9 @@ class ProjectorInfo:
         if data[5 + offset] != 3:
             return
 
-        data_id = data[8 + offset] * 256 + data[7 + offset]
-        data_id = (data_id and 32767) + 1  # (data_id & 0x7FFF) + 1
-        value = ((data[8 + offset] and 128) != 128) // 0x80
+        data_id = (data[8 + offset] * 256) + data[7 + offset]
+        data_id = (data_id & 32767) + 1  # (data_id & 0x7FFF) + 1
+        value = ((data[8 + offset] & 128) != 128)  # 0x80
 
         self.submit_task(TASK_VALUE, data_id, DATA_BOOL, value)
 
@@ -225,8 +225,9 @@ class ProjectorInfo:
         self.submit_task(TASK_VALUE, data_id, DATA_ANALOG, value)
 
     def handle_serial1(self, data, offset):
+        # LOG_D("-->handle_serial1")
         msg = ""
-        data_id = data[7 + offset] * 256 + data[8 + offset] + 1
+        data_id = (data[7 + offset] * 256) + data[8 + offset] + 1
         n = data[5 + offset] - 4
         j = 10 + offset
         i = 0
@@ -240,8 +241,9 @@ class ProjectorInfo:
         self.submit_task(TASK_VALUE, data_id, DATA_TEXT, msg)
 
     def handle_serial2(self, data, offset):
+        # LOG_D("-->handle_serial2")
         msg = ""
-        data_id = data[7 + offset].toInt() + 1
+        data_id = data[7 + offset] + 1
         n = data[5 + offset] - 2
         j = 8 + offset
         i = 0
@@ -254,6 +256,7 @@ class ProjectorInfo:
         self.submit_task(TASK_VALUE, data_id, DATA_TEXT, msg)
 
     def handle_serial3(self, data, offset):
+        # LOG_D("-->handle_serial3")
         if data[7 + offset] == 35:
             i = 8 + offset
             j = i + (data[5 + offset] - 2)
