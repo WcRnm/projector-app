@@ -62,9 +62,7 @@ class ProjectorInfo:
         self.buffer.clear()
         self.tasks.clear()
 
-        self.status[LAMP_HRS] = 0
         self.status[MSG_COUNT] = 0
-        self.status[SERVICE_HRS] = 0
         self.status[ONLINE] = False
 
         self.caps[SUPPORTS_HEARTBEAT] = False
