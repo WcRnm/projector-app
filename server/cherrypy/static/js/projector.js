@@ -19,5 +19,25 @@ function getStatus() {
   xhttp.send();
 }
 
+function on_ws_open() {
+  ws_send('Hello Websocket');
+}
+function on_ws_close() {
+  
+}
+function on_ws_message(msg) {
+  console.log('ws: ' + msg);
+}
+function on_ws_erorr(err) {
+  
+}
+
 
 getStatus()
+ws_init(
+    'ws://' + document.location.host + '/ws',
+    on_ws_open,
+    on_ws_close,
+    on_ws_message,
+    on_ws_erorr
+  );

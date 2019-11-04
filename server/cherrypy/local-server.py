@@ -1,6 +1,9 @@
 import cherrypy
 from cherrypy.process import plugins
 
+from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
+from ws4py.websocket import EchoWebSocket
+
 import mimetypes
 import os
 import socket
@@ -115,17 +118,31 @@ class ProjectorServer(object):
     def projector(self):
         return projector.status
 
+    @cherrypy.expose
+    def ws(self):
+        # you can access the class instance through
+        handler = cherrypy.request.ws_handler
+
 
 if __name__ == '__main__':
     conf = {
         '/': {
             'tools.sessions.on': True,
-            'tools.staticdir.root': os.path.abspath(os.getcwd())
+            'tools.staticdir.root': os.path.abspath(os.getcwd()),
         },
         '/static': {
             'tools.staticdir.on': True,
             'tools.staticdir.dir': './static',
+        },
+        '/ws': {
+            'tools.websocket.on': True,
+            'tools.websocket.handler_cls': EchoWebSocket
         }
     }
+
     Projector(cherrypy.engine).subscribe()
+
+    WebSocketPlugin(cherrypy.engine).subscribe()
+    cherrypy.tools.websocket = WebSocketTool()
+
     cherrypy.quickstart(ProjectorServer(), '/', conf)
