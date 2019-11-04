@@ -10,6 +10,7 @@ TEXT_NAMES = {
     2: 'state-error',
     5: 'state-lamp-hrs',
     5003: 'state-mode',
+    5010: 'value-source',
     5040: 'network-ip-addr',
     5041: 'network-netmask',
     5044: 'network-mac-addr',
