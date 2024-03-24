@@ -3,7 +3,7 @@ use std::thread;
 use std::time::Duration;
 
 pub trait Process {
-    fn process(&self);
+    fn process(&mut self) -> bool;
 }
 
 struct ProcessorInner {
@@ -32,8 +32,10 @@ impl Processor {
             let inner = self.inner.clone();
             let handle = thread::spawn(move || {
                 while inner.lock().unwrap().running {
-                    thread::sleep(Duration::from_millis(250));
-                    inner.lock().unwrap().process.process();
+                    let busy = inner.lock().unwrap().process.process();
+                    if !busy {
+                        thread::sleep(Duration::from_millis(250));
+                    }
                 }
             });
 

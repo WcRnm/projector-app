@@ -2,6 +2,7 @@
 
 mod processor;
 mod projector;
+mod projector_info;
 
 use processor::{Process, Processor};
 use projector::Projector;
