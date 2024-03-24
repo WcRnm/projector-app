@@ -2,12 +2,11 @@
 
 mod process;
 mod projector;
-mod projector_info;
-
-use projector::Projector;
 
 use crate::process::process::Process;
 use crate::process::processor::Processor;
+
+use crate::projector::projector::Projector;
 
 slint::include_modules!();
 

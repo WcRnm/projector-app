@@ -2,9 +2,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-pub trait Process {
-    fn process(&mut self) -> bool;
-}
+use crate::Process;
 
 struct ProcessorInner {
     running: bool,
