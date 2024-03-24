@@ -1,11 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod processor;
+mod process;
 mod projector;
 mod projector_info;
 
-use processor::{Process, Processor};
 use projector::Projector;
+
+use crate::process::process::Process;
+use crate::process::processor::Processor;
 
 slint::include_modules!();
 
