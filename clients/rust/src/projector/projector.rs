@@ -1,11 +1,8 @@
 use crate::process::process::Process;
-use crate::projector::info::PacketType;
+use crate::projector::info::*;
 
 use std::io::Read;
 use std::net::TcpStream;
-
-const DEFAULT_PROJECTOR_ADDR: &'static str = "127.0.0.1";
-const DEFAULT_PROJECTOR_PORT: u32 = 41794;
 
 const READ_BUFFER_SIZE: usize = 1024;
 
@@ -19,8 +16,8 @@ pub struct Projector {
 impl Projector {
     pub fn new() -> Projector {
         Projector {
-            addr: DEFAULT_PROJECTOR_ADDR.to_string(),
-            port: DEFAULT_PROJECTOR_PORT,
+            addr: DEFAULT_ADDR.to_string(),
+            port: DEFAULT_PORT,
             stream: None,
             read_buf: Vec::new(),
         }

@@ -1,3 +1,6 @@
+pub const DEFAULT_ADDR: &'static str = "127.0.0.1";
+pub const DEFAULT_PORT: u32 = 41794;
+
 #[derive(Debug, enumn::N)]
 #[repr(u8)]
 pub enum PacketType {
