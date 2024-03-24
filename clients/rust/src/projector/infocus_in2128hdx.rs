@@ -34,7 +34,9 @@ impl Handler {
         }
     }
 
-    //fn handle_packet(&mut self, _packet: &[u8]) {
+    fn on_disconnect(&self) {}
+    fn submit_task(&self, _task: Task) {}
+
     fn handle_packet(&mut self, packet_len: usize) {
         let mut packet = vec![0; packet_len]; // = [0; packet_len];
         packet.copy_from_slice(&self.read_buf[0..packet_len]);
@@ -77,8 +79,10 @@ impl Handler {
             self.caps.repeat_digitals = supported;
         }
 
-        self.connected = true
-        //self.submit_task(TASK_REQUEST_INFO)
+        self.connected = true;
+
+        println!("Connected: caps:{:?}", self.caps);
+        self.submit_task(Task::RequestInfo)
     }
 
     fn handle_disconnect(&self, _packet: Vec<u8>) {
@@ -90,8 +94,21 @@ impl Handler {
     fn handle_heartbeat(&self, _packet: Vec<u8>) {
         println!("Heartbeat");
     }
-    fn handle_connect_status(&self, _packet: Vec<u8>) {
+    fn handle_connect_status(&self, packet: Vec<u8>) {
         println!("ConnectStatus");
+
+        if packet.len() < 4 {
+            return;
+        }
+
+        let action = packet[3];
+        match action {
+            0 => self.on_disconnect(),
+            2 => if !self.connected {
+                    self.submit_task(Task::Connect)
+                },
+            1_u8 | 3_u8..=u8::MAX => {},
+        }
     }
 }
 
@@ -100,7 +117,7 @@ impl ProjectorHandler for Handler {
         println!("on_rx: {} bytes", data.len());
 
         self.read_buf.extend_from_slice(data);
-        if self.read_buf.len() < 6 {
+        if self.read_buf.len() < 4 {
             return;
         }
 

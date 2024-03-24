@@ -16,6 +16,7 @@ pub enum PacketType {
     ConnectStatus = 15,
 }
 
+#[derive(Debug)]
 pub struct Capabilites {
     pub heartbeat: bool,
     pub repeat_digitals: bool,
@@ -28,4 +29,9 @@ impl Capabilites {
             repeat_digitals: false,
         }
     }
+}
+
+pub enum Task {
+    Connect,
+    RequestInfo,
 }
