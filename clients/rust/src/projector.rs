@@ -51,7 +51,7 @@ impl Projector {
         println!("Read {} bytes", data.len());
 
         self.read_buf.extend_from_slice(data);
-        if self.read_buf.len() < 3 {
+        if self.read_buf.len() < 6 {
             return;
         }
 
@@ -63,10 +63,6 @@ impl Projector {
             return;
         }
 
-        //let packet = &self.read_buf[0..packet_len];
-        //let packet = self.read_buf.drain(0..packet_len);
-
-        //self.handle_packet(packet.as_slice());
         self.handle_packet(packet_len);
 
         self.read_buf.drain(0..packet_len);
@@ -97,25 +93,39 @@ impl Projector {
         match packet_type {
             Some(p) => match p as PacketType {
                 PacketType::ConnectResponse => {
-                    println!("ConnectResponse");
+                    self.handle_connect_response(packet);
                 }
                 PacketType::Disconnect | PacketType::Disconnect2 => {
-                    println!("Disconnect");
+                    self.handle_disconnect(packet);
                 }
                 PacketType::Data => {
-                    println!("Data");
+                    self.handle_data_packet(packet);
                 }
                 PacketType::Heartbeat => {
-                    println!("Heartbeat");
+                    self.handle_heartbeat(packet);
                 }
                 PacketType::ConnectStatus => {
-                    println!("ConnectStatus");
+                    self.handle_connect_status(packet);
                 }
             },
-            None => {
-                return;
-            }
+            None => {}
         }
+    }
+
+    fn handle_connect_response(&self, _packet: &[u8]) {
+        println!("ConnectResponse");
+    }
+    fn handle_disconnect(&self, _packet: &[u8]) {
+        println!("Disconnect");
+    }
+    fn handle_data_packet(&self, _packet: &[u8]) {
+        println!("Data");
+    }
+    fn handle_heartbeat(&self, _packet: &[u8]) {
+        println!("Heartbeat");
+    }
+    fn handle_connect_status(&self, _packet: &[u8]) {
+        println!("ConnectStatus");
     }
 }
 
