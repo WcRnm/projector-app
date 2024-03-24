@@ -73,8 +73,8 @@ impl Handler {
 }
 
 impl ProjectorHandler for Handler {
-    fn handle_data(&mut self, data: &[u8]) {
-        println!("Read {} bytes", data.len());
+    fn on_rx(&mut self, data: &[u8]) {
+        println!("on_rx: {} bytes", data.len());
 
         self.read_buf.extend_from_slice(data);
         if self.read_buf.len() < 6 {

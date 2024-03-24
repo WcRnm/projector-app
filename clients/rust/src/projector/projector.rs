@@ -57,7 +57,7 @@ impl Process for Projector {
             let bytes_read = self.stream.as_ref().unwrap().read(&mut rx_bytes);
             match bytes_read {
                 Ok(len) => {
-                    self.handler.handle_data(&rx_bytes[..len]);
+                    self.handler.on_rx(&rx_bytes[..len]);
                     if len == READ_BUFFER_SIZE {
                         return true;
                     }
