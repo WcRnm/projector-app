@@ -1,5 +1,7 @@
 use crate::projector::info::*;
 
+use std::str;
+
 pub struct Handler {
     connected: bool,
     session_id: u16,
@@ -46,6 +48,18 @@ impl Handler {
     }
 
     fn submit_task(&self, _task: Task) {}
+
+    fn submit_digtal(&self, _id: u16, _val: bool) {
+        //self.submit_task(TASK_VALUE, data_id, DATA_BOOL, value)
+    }
+
+    fn submit_analog(&self, _id: u16, _val: u32) {
+        //self.submit_task(TASK_VALUE, data_id, DATA_ANALOG, value)
+    }
+
+    fn submit_text(&self, _id: u16, _val: &str) {
+        //self.submit_task(TASK_VALUE, data_id, DATA_TEXT, msg)
+    }
 
     fn handle_task(&mut self, task: Task) {
         match task {
@@ -106,6 +120,7 @@ impl Handler {
     fn handle_disconnect(&self, _packet: Vec<u8>) {
         println!("Disconnect");
     }
+
     fn handle_data_packet(&self, data: Vec<u8>) {
         println!("Data");
 
@@ -119,14 +134,68 @@ impl Handler {
                 18 => self.handle_serial2(data, offset),
                 2 => self.handle_serial3(data, offset),
                 3 => self.handle_end_of_query(data, offset),
-                4_u8..=17_u8 | 19_u8 | 22_u8..=u8::MAX => {}
+                _ => {}
             }
         }
     }
 
-    fn handle_digital(&self, _data: Vec<u8>, _offset: usize) {}
-    fn handle_analog(&self, _data: Vec<u8>, _offset: usize) {}
-    fn handle_serial1(&self, _data: Vec<u8>, _offset: usize) {}
+    fn handle_digital(&self, data: Vec<u8>, offset: usize) {
+        if data[5 + offset] != 3 {
+            return;
+        }
+
+        let mut data_id = (data[8 + offset] as u16 * 256) + data[7 + offset] as u16;
+        data_id = (data_id & 32767) + 1; // (data_id & 0x7FFF) + 1
+        let value = (data[8 + offset] & 128) != 128; // 0x80
+
+        self.submit_digtal(data_id, value);
+    }
+
+    fn handle_analog(&self, data: Vec<u8>, offset: usize) {
+        let mut data_id: u16 = data[7 + offset] as u16 + 1;
+        let t = data[5 + offset];
+        let value: u32;
+        match t {
+            3 => value = data[8 + offset] as u32,
+            4 => value = data[8 + offset] as u32 * 256 + data[9 + offset] as u32,
+            5 => {
+                data_id = data_id as u16 * 256 + data[8 + offset] as u16;
+                value = data[9 + offset] as u32 * 256 + data[10 + offset] as u32;
+            }
+            _ => {
+                return;
+            }
+        }
+        self.submit_analog(data_id, value);
+    }
+
+    fn handle_serial1(&self, data: Vec<u8>, offset: usize) {
+        let data_id = (data[7 + offset] as u16 * 256) + data[8 + offset] as u16 + 1;
+        let n = data[5 + offset] as usize - 4;
+        let start = 10 + offset;
+        let end = start + n;
+
+        let msg = &data[start..end];
+
+        let s = match str::from_utf8(msg) {
+            Ok(v) => v,
+            Err(e) => {
+                println!("Invalid UTF-8 sequence: {}", e);
+                return;
+            }
+        };
+
+        //let i = 0;
+        //while i < n {
+        //    // todo: string append is inefficient - improve it!
+        //    msg += chr(data[j]);
+        //    i += 1;
+        //    j += 1;
+        //}
+
+        self.submit_text(data_id, &s);
+    }
+
     fn handle_serial2(&self, _data: Vec<u8>, _offset: usize) {}
     fn handle_serial3(&self, _data: Vec<u8>, _offset: usize) {}
     fn handle_end_of_query(&self, _data: Vec<u8>, _offset: usize) {}
