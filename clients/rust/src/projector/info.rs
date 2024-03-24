@@ -15,3 +15,17 @@ pub enum PacketType {
     Heartbeat = 14,
     ConnectStatus = 15,
 }
+
+pub struct Capabilites {
+    pub heartbeat: bool,
+    pub repeat_digitals: bool,
+}
+
+impl Capabilites {
+    pub fn new() -> Capabilites {
+        Capabilites {
+            heartbeat: false,
+            repeat_digitals: false,
+        }
+    }
+}

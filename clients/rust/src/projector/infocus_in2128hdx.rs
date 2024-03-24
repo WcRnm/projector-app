@@ -1,13 +1,19 @@
 use crate::projector::info::*;
 
 pub struct Handler {
+    connected: bool,
+    session_id: u16,
     read_buf: Vec<u8>,
+    caps: Capabilites,
 }
 
 impl Handler {
     pub fn new() -> Handler {
         Handler {
+            connected: false,
+            session_id: 0,
             read_buf: Vec::new(),
+            caps: Capabilites::new(),
         }
     }
 
@@ -29,10 +35,11 @@ impl Handler {
     }
 
     //fn handle_packet(&mut self, _packet: &[u8]) {
-    fn handle_packet(&self, packet_len: usize) {
-        let packet = &self.read_buf[0..packet_len];
-
+    fn handle_packet(&mut self, packet_len: usize) {
+        let mut packet = vec![0; packet_len]; // = [0; packet_len];
+        packet.copy_from_slice(&self.read_buf[0..packet_len]);
         let packet_type = PacketType::n(packet[0]);
+
         match packet_type {
             Some(p) => match p as PacketType {
                 PacketType::ConnectResponse => {
@@ -55,19 +62,35 @@ impl Handler {
         }
     }
 
-    fn handle_connect_response(&self, _packet: &[u8]) {
+    fn handle_connect_response(&mut self, packet: Vec<u8>) {
         println!("ConnectResponse");
+
+        if self.connected || packet.len() < 6 {
+            return;
+        }
+
+        self.session_id = packet[3] as u16 * 256 + packet[4] as u16;
+
+        if packet.len() >= 7 {
+            let supported = (1 & packet[6]) == 1;
+            self.caps.heartbeat = supported;
+            self.caps.repeat_digitals = supported;
+        }
+
+        self.connected = true
+        //self.submit_task(TASK_REQUEST_INFO)
     }
-    fn handle_disconnect(&self, _packet: &[u8]) {
+
+    fn handle_disconnect(&self, _packet: Vec<u8>) {
         println!("Disconnect");
     }
-    fn handle_data_packet(&self, _packet: &[u8]) {
+    fn handle_data_packet(&self, _packet: Vec<u8>) {
         println!("Data");
     }
-    fn handle_heartbeat(&self, _packet: &[u8]) {
+    fn handle_heartbeat(&self, _packet: Vec<u8>) {
         println!("Heartbeat");
     }
-    fn handle_connect_status(&self, _packet: &[u8]) {
+    fn handle_connect_status(&self, _packet: Vec<u8>) {
         println!("ConnectStatus");
     }
 }
