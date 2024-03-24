@@ -1,14 +1,14 @@
+mod processor;
 mod projector;
-use projector::{Projector, Processor};
 
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
+use processor::{Process, Processor};
+use projector::Projector;
 
 slint::include_modules!();
 
 fn main() -> Result<(), slint::PlatformError> {
-    let projector = Arc::new (Mutex::new(Projector::new()));
+    let projector = Projector::new();
+    let mut processor = Processor::new(Box::new(projector) as Box<dyn Process + Send>);
 
     let ui = AppWindow::new()?;
 
@@ -20,29 +20,11 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
-    let handle;
-    {
-        let projector = Arc::clone(&projector);
-        handle = thread::spawn(move || {
-            worker(projector);
-        });    
-    }
+    processor.start();
 
     let ui_result = ui.run();
 
-    projector.lock().unwrap().stop();
-
-    handle.join().unwrap();
+    processor.stop();
 
     ui_result
-}
-
-
-fn worker(projector: Arc<Mutex<dyn Processor>>) {
-    projector.lock().unwrap().start();
-    while projector.lock().unwrap().is_running() {
-        thread::sleep(Duration::from_millis(250));
-        projector.lock().unwrap().process()
-    }
-    projector.lock().unwrap().stop()
 }
