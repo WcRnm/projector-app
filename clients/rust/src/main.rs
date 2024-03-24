@@ -5,13 +5,12 @@ mod projector;
 
 use crate::process::process::Process;
 use crate::process::processor::Processor;
-
-use crate::projector::projector::Projector;
+use crate::projector::projector::*;
 
 slint::include_modules!();
 
 fn main() -> Result<(), slint::PlatformError> {
-    let projector = Projector::new();
+    let projector = Projector::new(ProjectorType::InfocusIN2128HDx);
     let mut processor = Processor::new(Box::new(projector) as Box<dyn Process + Send>);
 
     let ui = AppWindow::new()?;
