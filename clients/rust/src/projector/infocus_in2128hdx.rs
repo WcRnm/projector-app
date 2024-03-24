@@ -34,8 +34,26 @@ impl Handler {
         }
     }
 
-    fn on_disconnect(&self) {}
+    fn reset(&mut self) {
+        self.connected = false;
+        self.session_id = 0;
+        self.read_buf.clear();
+        self.caps = Capabilites::new();
+    }
+
+    fn on_disconnect(&self) {
+        self.submit_task(Task::Reset);
+    }
+
     fn submit_task(&self, _task: Task) {}
+
+    fn handle_task(&mut self, task: Task) {
+        match task {
+            Task::Connect => {}
+            Task::RequestInfo => {}
+            Task::Reset => self.reset(),
+        }
+    }
 
     fn handle_packet(&mut self, packet_len: usize) {
         let mut packet = vec![0; packet_len]; // = [0; packet_len];
@@ -88,9 +106,31 @@ impl Handler {
     fn handle_disconnect(&self, _packet: Vec<u8>) {
         println!("Disconnect");
     }
-    fn handle_data_packet(&self, _packet: Vec<u8>) {
+    fn handle_data_packet(&self, data: Vec<u8>) {
         println!("Data");
+
+        if data[5] > 0 {
+            let offset = if data[6] == 32 { 3 } else { 0 };
+            let data_type = data[6 + offset];
+            match data_type {
+                0 => self.handle_digital(data, offset),
+                1 | 20 => self.handle_analog(data, offset),
+                21 => self.handle_serial1(data, offset),
+                18 => self.handle_serial2(data, offset),
+                2 => self.handle_serial3(data, offset),
+                3 => self.handle_end_of_query(data, offset),
+                4_u8..=17_u8 | 19_u8 | 22_u8..=u8::MAX => {}
+            }
+        }
     }
+
+    fn handle_digital(&self, _data: Vec<u8>, _offset: usize) {}
+    fn handle_analog(&self, _data: Vec<u8>, _offset: usize) {}
+    fn handle_serial1(&self, _data: Vec<u8>, _offset: usize) {}
+    fn handle_serial2(&self, _data: Vec<u8>, _offset: usize) {}
+    fn handle_serial3(&self, _data: Vec<u8>, _offset: usize) {}
+    fn handle_end_of_query(&self, _data: Vec<u8>, _offset: usize) {}
+
     fn handle_heartbeat(&self, _packet: Vec<u8>) {
         println!("Heartbeat");
     }
@@ -104,10 +144,12 @@ impl Handler {
         let action = packet[3];
         match action {
             0 => self.on_disconnect(),
-            2 => if !self.connected {
+            2 => {
+                if !self.connected {
                     self.submit_task(Task::Connect)
-                },
-            1_u8 | 3_u8..=u8::MAX => {},
+                }
+            }
+            1_u8 | 3_u8..=u8::MAX => {}
         }
     }
 }
