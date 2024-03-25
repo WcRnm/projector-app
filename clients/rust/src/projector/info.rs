@@ -3,6 +3,11 @@ pub const DEFAULT_PORT: u32 = 41794;
 
 pub trait ProjectorHandler {
     fn on_rx(&mut self, data: &[u8]);
+    fn on_idle(&mut self);
+}
+
+pub trait ProjectorSender {
+    fn send(&mut self, data: &[u8]);
 }
 
 #[derive(Debug, enumn::N)]

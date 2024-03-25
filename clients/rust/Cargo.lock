@@ -541,6 +541,7 @@ name = "buf-projector"
 version = "0.1.0"
 dependencies = [
  "enumn",
+ "rand",
  "slint",
  "slint-build",
 ]

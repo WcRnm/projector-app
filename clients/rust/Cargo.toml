@@ -9,6 +9,7 @@ build = "build.rs"
 
 [dependencies]
 enumn = "0.1.13"
+rand = "0.8.5"
 slint = "1.4"
 
 [build-dependencies]

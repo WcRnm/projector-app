@@ -1,21 +1,32 @@
 use crate::projector::info::*;
 
+use rand::Rng;
+use std::collections::VecDeque;
 use std::str;
 
 pub struct Handler {
+    location: String,
     connected: bool,
     session_id: u16,
+    ipid: u16,
     read_buf: Vec<u8>,
     caps: Capabilites,
+    task_deque: VecDeque<Task>,
+    //sender: dyn ProjectorSender,
 }
 
 impl Handler {
-    pub fn new() -> Handler {
+    pub fn new(location: &str) -> Handler {
+        let mut rng = rand::thread_rng();
         Handler {
+            location: location.to_string(),
             connected: false,
             session_id: 0,
+            ipid: rng.gen(),
             read_buf: Vec::new(),
             caps: Capabilites::new(),
+            task_deque: VecDeque::with_capacity(16),
+            //sender: None,
         }
     }
 
@@ -43,11 +54,9 @@ impl Handler {
         self.caps = Capabilites::new();
     }
 
-    fn on_disconnect(&self) {
-        self.submit_task(Task::Reset);
+    fn on_disconnect(&mut self) {
+        self.task_deque.push_back(Task::Reset);
     }
-
-    fn submit_task(&self, _task: Task) {}
 
     fn submit_digtal(&self, _id: u16, _val: bool) {
         //self.submit_task(TASK_VALUE, data_id, DATA_BOOL, value)
@@ -63,12 +72,14 @@ impl Handler {
 
     fn handle_task(&mut self, task: Task) {
         match task {
-            Task::Connect => {}
-            Task::RequestInfo => {}
+            Task::Connect => self.send(&MsgGenerator::connect(self.ipid)),
+            Task::RequestInfo => self.send(&MsgGenerator::msg_update_request(self.session_id)),
             Task::Reset => self.reset(),
-            Task::EndOfQuery => {}
+            Task::EndOfQuery => self.send(&MsgGenerator::end_of_query_response(self.session_id)),
         }
     }
+
+    fn send(&self, _msg: &[u8]) {}
 
     fn handle_packet(&mut self, packet_len: usize) {
         let mut packet = vec![0; packet_len]; // = [0; packet_len];
@@ -115,14 +126,14 @@ impl Handler {
         self.connected = true;
 
         println!("Connected: caps:{:?}", self.caps);
-        self.submit_task(Task::RequestInfo)
+        self.task_deque.push_back(Task::RequestInfo);
     }
 
     fn handle_disconnect(&self, _packet: Vec<u8>) {
         println!("Disconnect");
     }
 
-    fn handle_data_packet(&self, data: Vec<u8>) {
+    fn handle_data_packet(&mut self, data: Vec<u8>) {
         println!("Data");
 
         if data[5] > 0 {
@@ -228,14 +239,15 @@ impl Handler {
         }
     }
 
-    fn handle_end_of_query(&self, _data: Vec<u8>, _offset: usize) {
-        self.submit_task(Task::EndOfQuery);
+    fn handle_end_of_query(&mut self, _data: Vec<u8>, _offset: usize) {
+        self.task_deque.push_back(Task::EndOfQuery);
     }
 
     fn handle_heartbeat(&self, _packet: Vec<u8>) {
         println!("Heartbeat");
     }
-    fn handle_connect_status(&self, packet: Vec<u8>) {
+
+    fn handle_connect_status(&mut self, packet: Vec<u8>) {
         println!("ConnectStatus");
 
         if packet.len() < 4 {
@@ -247,7 +259,7 @@ impl Handler {
             0 => self.on_disconnect(),
             2 => {
                 if !self.connected {
-                    self.submit_task(Task::Connect)
+                    self.task_deque.push_back(Task::Connect);
                 }
             }
             _ => {}
@@ -265,10 +277,7 @@ impl ProjectorHandler for Handler {
         }
 
         let packet_len = self.next_packet_len(data);
-        if packet_len == 0 {
-            return;
-        }
-        if self.read_buf.len() < packet_len {
+        if (packet_len == 0) || (self.read_buf.len() < packet_len) {
             return;
         }
 
@@ -276,14 +285,20 @@ impl ProjectorHandler for Handler {
 
         self.read_buf.drain(0..packet_len);
     }
+
+    fn on_idle(&mut self) {
+        let item = self.task_deque.pop_front();
+        match item {
+            Some(task) => self.handle_task(task),
+            None => {}
+        }
+    }
 }
 
-struct MsgGenerator {
-    id: u16
-}
+struct MsgGenerator {}
 
 impl MsgGenerator {
-    pub fn connect(&self) -> [u8; 10] {
+    pub fn connect(ipid: u16) -> [u8; 10] {
         return [
             1,
             0,
@@ -292,35 +307,35 @@ impl MsgGenerator {
             0,
             0,
             0,
-            (self.id / 256) as u8,
-            (self.id % 256) as u8,
-            64
+            (ipid / 256) as u8,
+            (ipid % 256) as u8,
+            64,
         ];
     }
 
-    pub fn end_of_query_response(&self) -> [u8; 8] {
+    pub fn end_of_query_response(session_id: u16) -> [u8; 8] {
         return [
             5,
             0,
             5,
-            (self.id / 256) as u8,
-            (self.id % 256) as u8,
+            (session_id / 256) as u8,
+            (session_id % 256) as u8,
             2,
             3,
-            29
+            29,
         ];
     }
 
-    fn msg_update_request(&self) -> [u8; 8] {
+    fn msg_update_request(session_id: u16) -> [u8; 8] {
         return [
             5,
             0,
             5,
-            (self.id / 256) as u8,
-            (self.id % 256) as u8,
+            (session_id / 256) as u8,
+            (session_id % 256) as u8,
             2,
             3,
-            30
+            30,
         ];
     }
 }

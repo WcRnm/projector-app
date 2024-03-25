@@ -5,7 +5,10 @@ use crate::projector::infocus_in2128hdx;
 use std::io::Read;
 use std::net::TcpStream;
 
+use std::io::Write;
+
 const READ_BUFFER_SIZE: usize = 1024;
+const DEFAULT_LOCATION: &'static str = "Sanctuary";
 
 pub enum ProjectorType {
     InfocusIN2128HDx,
@@ -24,7 +27,7 @@ impl Projector {
             addr: DEFAULT_ADDR.to_string(),
             port: DEFAULT_PORT,
             stream: None,
-            handler: Box::new(infocus_in2128hdx::Handler::new()),
+            handler: Box::new(infocus_in2128hdx::Handler::new(DEFAULT_LOCATION)),
         }
     }
 
@@ -68,5 +71,17 @@ impl Process for Projector {
             }
         }
         false
+    }
+}
+
+impl ProjectorSender for Projector {
+    fn send(&mut self, data: &[u8]) {
+        match self.stream {
+            Some(ref mut s) => {
+                let _bytes_written = s.write(data);
+                let _ = s.flush();
+            }
+            None => {}
+        }
     }
 }
