@@ -247,7 +247,7 @@ impl Handler {
                     self.submit_task(Task::Connect)
                 }
             }
-            1_u8 | 3_u8..=u8::MAX => {}
+            _ => {}
         }
     }
 }
