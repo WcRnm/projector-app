@@ -66,6 +66,7 @@ impl Handler {
             Task::Connect => {}
             Task::RequestInfo => {}
             Task::Reset => self.reset(),
+            Task::EndOfQuery => {}
         }
     }
 
@@ -227,7 +228,9 @@ impl Handler {
         }
     }
 
-    fn handle_end_of_query(&self, _data: Vec<u8>, _offset: usize) {}
+    fn handle_end_of_query(&self, _data: Vec<u8>, _offset: usize) {
+        self.submit_task(Task::EndOfQuery);
+    }
 
     fn handle_heartbeat(&self, _packet: Vec<u8>) {
         println!("Heartbeat");
@@ -272,5 +275,52 @@ impl ProjectorHandler for Handler {
         self.handle_packet(packet_len);
 
         self.read_buf.drain(0..packet_len);
+    }
+}
+
+struct MsgGenerator {
+    id: u16
+}
+
+impl MsgGenerator {
+    pub fn connect(&self) -> [u8; 10] {
+        return [
+            1,
+            0,
+            7,
+            0,
+            0,
+            0,
+            0,
+            (self.id / 256) as u8,
+            (self.id % 256) as u8,
+            64
+        ];
+    }
+
+    pub fn end_of_query_response(&self) -> [u8; 8] {
+        return [
+            5,
+            0,
+            5,
+            (self.id / 256) as u8,
+            (self.id % 256) as u8,
+            2,
+            3,
+            29
+        ];
+    }
+
+    fn msg_update_request(&self) -> [u8; 8] {
+        return [
+            5,
+            0,
+            5,
+            (self.id / 256) as u8,
+            (self.id % 256) as u8,
+            2,
+            3,
+            30
+        ];
     }
 }

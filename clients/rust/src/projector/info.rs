@@ -34,5 +34,6 @@ impl Capabilites {
 pub enum Task {
     Connect,
     RequestInfo,
+    EndOfQuery,
     Reset,
 }
