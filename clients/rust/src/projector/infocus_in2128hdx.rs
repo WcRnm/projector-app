@@ -3,30 +3,29 @@ use crate::projector::info::*;
 use rand::Rng;
 use std::collections::VecDeque;
 use std::str;
+use std::sync::mpsc::Sender;
 
 pub struct Handler {
-    location: String,
     connected: bool,
     session_id: u16,
     ipid: u16,
     read_buf: Vec<u8>,
     caps: Capabilites,
     task_deque: VecDeque<Task>,
-    //sender: dyn ProjectorSender,
+    sender: Sender<Vec<u8>>,
 }
 
 impl Handler {
-    pub fn new(location: &str) -> Handler {
+    pub fn new(sender: Sender<Vec<u8>>) -> Handler {
         let mut rng = rand::thread_rng();
         Handler {
-            location: location.to_string(),
             connected: false,
             session_id: 0,
             ipid: rng.gen(),
             read_buf: Vec::new(),
             caps: Capabilites::new(),
             task_deque: VecDeque::with_capacity(16),
-            //sender: None,
+            sender: sender,
         }
     }
 
@@ -71,6 +70,7 @@ impl Handler {
     }
 
     fn handle_task(&mut self, task: Task) {
+        println!("Task::{:?}", task);
         match task {
             Task::Connect => self.send(&MsgGenerator::connect(self.ipid)),
             Task::RequestInfo => self.send(&MsgGenerator::msg_update_request(self.session_id)),
@@ -79,7 +79,10 @@ impl Handler {
         }
     }
 
-    fn send(&self, _msg: &[u8]) {}
+    fn send(&mut self, msg: &[u8]) {
+        println!("send {}", msg.len());
+        let _ = self.sender.send(msg.to_vec());
+    }
 
     fn handle_packet(&mut self, packet_len: usize) {
         let mut packet = vec![0; packet_len]; // = [0; packet_len];
@@ -255,10 +258,12 @@ impl Handler {
         }
 
         let action = packet[3];
+        println!("  action:{action}");
         match action {
             0 => self.on_disconnect(),
             2 => {
                 if !self.connected {
+                    println!("  push Task::Connect");
                     self.task_deque.push_back(Task::Connect);
                 }
             }
@@ -282,7 +287,6 @@ impl ProjectorHandler for Handler {
         }
 
         self.handle_packet(packet_len);
-
         self.read_buf.drain(0..packet_len);
     }
 

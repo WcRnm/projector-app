@@ -36,6 +36,7 @@ impl Capabilites {
     }
 }
 
+#[derive(Debug)]
 pub enum Task {
     Connect,
     RequestInfo,
