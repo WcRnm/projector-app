@@ -169,6 +169,16 @@ impl Handler {
         self.submit_analog(data_id, value);
     }
 
+    fn handle_text_msg(&self, data_id: u16, msg: &[u8]) {
+        match str::from_utf8(msg) {
+            Ok(s) => self.submit_text(data_id, &s),
+            Err(e) => {
+                println!("Invalid UTF-8 sequence: {}", e);
+                return;
+            }
+        };
+    }
+
     fn handle_serial1(&self, data: Vec<u8>, offset: usize) {
         let data_id = (data[7 + offset] as u16 * 256) + data[8 + offset] as u16 + 1;
         let n = data[5 + offset] as usize - 4;
@@ -176,28 +186,47 @@ impl Handler {
         let end = start + n;
 
         let msg = &data[start..end];
-
-        let s = match str::from_utf8(msg) {
-            Ok(v) => v,
-            Err(e) => {
-                println!("Invalid UTF-8 sequence: {}", e);
-                return;
-            }
-        };
-
-        //let i = 0;
-        //while i < n {
-        //    // todo: string append is inefficient - improve it!
-        //    msg += chr(data[j]);
-        //    i += 1;
-        //    j += 1;
-        //}
-
-        self.submit_text(data_id, &s);
+        self.handle_text_msg(data_id, msg);
     }
 
-    fn handle_serial2(&self, _data: Vec<u8>, _offset: usize) {}
-    fn handle_serial3(&self, _data: Vec<u8>, _offset: usize) {}
+    fn handle_serial2(&self, data: Vec<u8>, offset: usize) {
+        let data_id = data[7 + offset] as u16 + 1;
+        let n = data[5 + offset] as usize - 2;
+        let start = 8 + offset;
+        let end = start + n;
+
+        let msg = &data[start..end];
+        self.handle_text_msg(data_id, msg);
+    }
+
+    fn handle_serial3(&self, data: Vec<u8>, offset: usize) {
+        if data[7 + offset] != 35 {
+            return;
+        }
+
+        let mut msg = Vec::new();
+        let mut i = 8 + offset;
+        let j = i + (data[5 + offset] as usize - 2);
+        while j > i {
+            let mut data_id: u16 = 0;
+            while 48 <= data[i] && data[i] <= 57 {
+                i += 1;
+                data_id = data_id * 10 + (data[i] as u16 - 48);
+            }
+
+            msg.clear();
+            i += 1;
+            while i < j && data[i] != 13 {
+                i += 1;
+                msg.push(data[i]);
+            }
+
+            self.handle_text_msg(data_id, &msg[..]);
+
+            i += 2;
+        }
+    }
+
     fn handle_end_of_query(&self, _data: Vec<u8>, _offset: usize) {}
 
     fn handle_heartbeat(&self, _packet: Vec<u8>) {
