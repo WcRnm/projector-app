@@ -1,6 +1,8 @@
 import PyQt6.QtWidgets as qt
 import sys
 
+from connection import ProjectorConnection
+
 VERSION = 0.1
 MAX_LAMP_LIFE = 400  # hrs
 
@@ -10,6 +12,8 @@ class MainWindow(qt.QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Projector')
+
+        self.connection = ProjectorConnection()
 
         self.layout = qt.QGridLayout()
         self.row = 0
@@ -51,11 +55,20 @@ class MainWindow(qt.QMainWindow):
         self.lamp_progress.setValue(curr)
         pass
 
+    def connect(self):
+        self.connection.start()
+
+    def disconnect(self):
+        self.connection.stop()
+
 
 if __name__ == '__main__':
     app = qt.QApplication(sys.argv)
 
     window = MainWindow()
+    window.connect()
     window.show()
 
     app.exec()
+
+    window.disconnect()
