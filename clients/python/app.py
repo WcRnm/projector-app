@@ -2,6 +2,7 @@ import PyQt6.QtWidgets as qt
 import sys
 
 from connection import ProjectorConnection
+from crestron import Projector
 
 VERSION = 0.1
 MAX_LAMP_LIFE = 400  # hrs
@@ -13,7 +14,8 @@ class MainWindow(qt.QMainWindow):
 
         self.setWindowTitle('Projector')
 
-        self.connection = ProjectorConnection()
+        self.projector = Projector()
+        self.connection = ProjectorConnection(self.projector)
 
         self.layout = qt.QGridLayout()
         self.row = 0

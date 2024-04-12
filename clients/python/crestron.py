@@ -44,15 +44,17 @@ def LOG_D(msg):
     print(msg)
 
 
-class ProjectorInfo:
-    def __init__(self, location, ipid):
+class Projector:
+    def __init__(self, ipid=0, onValueChange=None):
         self.connected = False
-        self.ipid = ipid
+        self.ipid = ipid  # app ID ?
         self.handle = 0  # Projector ID
         self.buffer = bytearray()
         self.tasks = TaskQueue()
         self.status = {}
         self.caps = {}
+        self.namer = DataNamer()
+        self.onValueChange = onValueChange
 
         self.reset()
 
@@ -71,9 +73,7 @@ class ProjectorInfo:
     def idle_tasks(self, sock):
         while not self.tasks.empty():
             task, data_id, data_value, value_type = self.tasks.safe_get()
-            # LOG_D("task: {}".format(task))
 
-            # todo: handle tasks
             if TASK_CONNECT == task:
                 sock.send(self.msg_connect(self.ipid))
             elif TASK_REQUEST_INFO == task:
@@ -81,9 +81,11 @@ class ProjectorInfo:
             elif TASK_END_OF_QUERY == task:
                 sock.send(self.msg_end_of_query_response(self.handle))
             elif TASK_VALUE == task:
-                name = get_id_name(data_id, value_type)
+                name = self.namer.get_name(data_id, value_type)
                 LOG_D("  {} = {}".format(name, data_value))
                 self.status[name] = data_value
+                if self.onValueChange:
+                    self.onValueChange(name, data_value)
             else:
                 continue
 
@@ -97,7 +99,7 @@ class ProjectorInfo:
         self.buffer.extend(data)
 
         while True:
-            packet_len = ProjectorInfo.next_packet_len(self.buffer)
+            packet_len = Projector.next_packet_len(self.buffer)
             if 0 == packet_len:
                 break
 

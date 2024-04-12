@@ -2,7 +2,7 @@ import socket
 import threading
 import time
 
-from crestron import ProjectorInfo, ProjectorDisconnectError
+from crestron import Projector, ProjectorDisconnectError
 
 debug = True
 
@@ -14,14 +14,14 @@ DEFAULT_PROJECTOR_PORT = 41794
 
 # class ProjectorConnection(plugins.SimplePlugin):
 class ProjectorConnection:
-    def __init__(self):
+    def __init__(self, projector):
         global connection
         connection = self
 
-        self.info = ProjectorInfo('Sanctuary', 0)
+        self.projector = projector
         self.t = None
         self.running = False
-        self.status = [self.info.status]
+        self.status = [self.projector.status]
         self.sock = None
 
     def start(self):
@@ -48,7 +48,7 @@ class ProjectorConnection:
                 self.sock.close()
             finally:
                 self.sock = None
-                self.info.reset()
+                self.projector.reset()
 
     def process(self):
         if self.sock is None:
@@ -57,14 +57,14 @@ class ProjectorConnection:
         if self.sock is not None:
             try:
                 data = self.sock.recv(1024)
-                self.info.handle_data(data)
+                self.projector.handle_data(data)
 
             except IOError:
                 self.disconnect()
             except ProjectorDisconnectError:
                 self.disconnect()
 
-        self.info.idle_tasks(self.sock)
+        self.projector.idle_tasks(self.sock)
 
     @staticmethod
     def worker():
