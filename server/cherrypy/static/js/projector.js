@@ -70,10 +70,8 @@ function getStatus() {
 }
 
 function on_ws_open() {
-  ws_send('Hello Websocket');
 }
 function on_ws_close() {
-  
 }
 function on_ws_message(msg) {
   console.log('ws: ' + msg);
