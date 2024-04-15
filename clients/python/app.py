@@ -1,11 +1,79 @@
+from dataclasses import dataclass
 import PyQt6.QtWidgets as qt
+from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtCore import QThread
+
+from enum import IntEnum
 import sys
+import time
 
 from connection import ProjectorConnection
 from crestron import Projector
+from data_names import DataId
 
 VERSION = 0.1
 MAX_LAMP_LIFE = 400  # hrs
+
+
+class TaskType(IntEnum):
+    Heartbeat = 0
+    Value = 1
+
+
+@dataclass
+class UiTask:
+    type: TaskType
+    id: int
+    nam: str
+    value: any
+
+
+class Worker(QThread):
+    def __init__(self, main):
+        QThread.__init__(self)
+        self.main = main
+        self.running = False
+        self.tasks = []
+
+    def __del__(self):
+        self.stop()
+
+    def stop(self):
+        if self.running:
+            self.running = False
+            self.wait()
+
+    def run(self):
+        self.running = True
+        print('Worker: Run')
+
+        while self.running:
+            time.sleep(0.25)
+
+            while len(self.tasks) > 0:
+                task = self.tasks.pop()
+
+                if TaskType.Heartbeat == task.type:
+                    self.main.on_heartbeat()
+                elif DataId.STATE_LAMP_HOURS == task.id:
+                    self.main.set_lamp_hours(int(task.value))
+
+        print('Worker: Done')
+
+    def on_idle(self):
+        pass
+
+    def on_value_change(self, data_id, data_name, data_value):
+        task = UiTask(
+            TaskType.Value, data_id, data_name, data_value
+        )
+        self.tasks.append(task)
+
+    def on_heartbeat(self):
+        task = UiTask(
+            TaskType.Heartbeat, 0, 'Heartbeat', 0
+        )
+        self.tasks.append(task)
 
 
 class MainWindow(qt.QMainWindow):
@@ -14,7 +82,9 @@ class MainWindow(qt.QMainWindow):
 
         self.setWindowTitle('Projector')
 
-        self.projector = Projector()
+        self.worker = Worker(self)
+
+        self.projector = Projector(self.worker)
         self.connection = ProjectorConnection(self.projector)
 
         self.layout = qt.QGridLayout()
@@ -28,11 +98,15 @@ class MainWindow(qt.QMainWindow):
         self.lamp_progress = qt.QProgressBar()
         self.lamp_progress.setMinimum(0)
         self.lamp_progress.setMaximum(MAX_LAMP_LIFE)
+        self.lamp_progress.setValue(0)
         self.lamp_progress.setFormat('%v/%m hrs')
-        self.set_lamp_life(40)
+
+        self.heartbeatCount = 0
+        self.heartbeat = qt.QLCDNumber()
 
         self.add_row('Power', self.power_button)
         self.add_row('Lamp', self.lamp_progress)
+        self.add_row('Heartbeat', self.heartbeat)
 
         widget = qt.QWidget()
         widget.setLayout(self.layout)
@@ -53,15 +127,26 @@ class MainWindow(qt.QMainWindow):
     def set_color(self, widget, fg, bg):
         widget.setStyleSheet(f"color: {fg}; background-color : {bg};")
 
-    def set_lamp_life(self, curr):
-        self.lamp_progress.setValue(curr)
-        pass
-
     def connect(self):
+        self.worker.start()
         self.connection.start()
 
     def disconnect(self):
         self.connection.stop()
+        self.worker.stop()
+
+    def on_idle(self):
+        pass
+        # QGuiApplication.processEvents()
+
+    def set_lamp_hours(self, hrs):
+        self.lamp_progress.setValue(hrs)
+        self.lamp_progress.update()
+
+    def on_heartbeat(self):
+        self.heartbeatCount += 1
+        self.heartbeat.display(self.heartbeatCount)
+        self.heartbeat.update()
 
 
 if __name__ == '__main__':

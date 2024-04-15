@@ -9,7 +9,7 @@ DATA_BOOL = 'boolean'
 DATA_ANALOG = 'analog'
 
 
-class Name(IntEnum):
+class DataId(IntEnum):
     STATE_ERROR = 2,
     STATE_LAMP_HOURS = 5
     STATE_MODE = 5003

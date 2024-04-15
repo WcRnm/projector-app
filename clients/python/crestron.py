@@ -2,6 +2,7 @@ import queue
 import math
 
 from data_names import *
+from enum import Enum
 
 
 class ProjectorError(Exception):
@@ -18,6 +19,7 @@ TASK_CONNECT = 'connect'
 TASK_REQUEST_INFO = 'request-info'
 TASK_END_OF_QUERY = 'end-of-query'
 TASK_VALUE = 'value'
+TASK_HEARTBEAT = 'heartbeat'
 
 
 class TaskQueue(queue.Queue):
@@ -45,7 +47,7 @@ def LOG_D(msg):
 
 
 class Projector:
-    def __init__(self, ipid=0, onValueChange=None):
+    def __init__(self, callbacks=None, ipid=0):
         self.connected = False
         self.ipid = ipid  # app ID ?
         self.handle = 0  # Projector ID
@@ -54,7 +56,7 @@ class Projector:
         self.status = {}
         self.caps = {}
         self.namer = DataNamer()
-        self.onValueChange = onValueChange
+        self.callbacks = callbacks
 
         self.reset()
 
@@ -71,6 +73,7 @@ class Projector:
         self.caps[SUPPORTS_REPEAT_DIGITALS] = False
 
     def idle_tasks(self, sock):
+        self.callbacks.on_idle()
         while not self.tasks.empty():
             task, data_id, data_value, value_type = self.tasks.safe_get()
 
@@ -84,8 +87,9 @@ class Projector:
                 name = self.namer.get_name(data_id, value_type)
                 LOG_D("  {} = {}".format(name, data_value))
                 self.status[name] = data_value
-                if self.onValueChange:
-                    self.onValueChange(name, data_value)
+                self.callbacks.on_value_change(data_id, name, data_value)
+            elif TASK_HEARTBEAT == task:
+                self.callbacks.on_heartbeat()
             else:
                 continue
 
@@ -184,6 +188,7 @@ class Projector:
     def handle_heartbeat(self, packet):
         LOG_D("heartbeat")
         # TODO: if missed heart beat response ...
+        self.submit_task(TASK_HEARTBEAT)
 
     def handle_connect_status(self, packet):
         LOG_D("connect_status")
