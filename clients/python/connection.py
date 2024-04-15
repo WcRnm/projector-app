@@ -1,7 +1,7 @@
-from PyQt6.QtCore import QThread
-
 import socket
 import time
+
+from PyQt6.QtCore import QThread
 
 from crestron import ProjectorDisconnectError
 
@@ -9,7 +9,6 @@ DEFAULT_PROJECTOR_ADDR = '127.0.0.1'
 DEFAULT_PROJECTOR_PORT = 41794
 
 
-# class ProjectorConnection(plugins.SimplePlugin):
 class ProjectorConnection(QThread):
     def __init__(self, projector):
         QThread.__init__(self)

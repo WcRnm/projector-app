@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 
 class ProjectorDataHandler:
@@ -11,6 +11,5 @@ class ProjectorDataHandler:
         pass
 
     @abstractmethod
-    def set_lamp_hours(self, hrs):
+    def set_lamp_hours(self, curr_hrs, max_hrs):
         pass
-

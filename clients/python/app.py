@@ -1,18 +1,18 @@
-from dataclasses import dataclass
-import PyQt6.QtWidgets as qt
-from PyQt6.QtCore import QThread
-
-from enum import IntEnum
 import sys
 import time
+from dataclasses import dataclass
+from enum import IntEnum
+
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QThread
 
 from connection import ProjectorConnection
 from crestron import Projector
 from data_names import DataId
-from handler import ProjectorDataHandler
+from ui import MainWindow
 
 VERSION = 0.1
-MAX_LAMP_LIFE = 400  # hrs
+MAX_LAMP_HOURS = 400  # hrs
 
 
 class TaskType(IntEnum):
@@ -56,7 +56,7 @@ class Worker(QThread):
                 if TaskType.Heartbeat == task.type:
                     self.handler.on_heartbeat()
                 elif DataId.STATE_LAMP_HOURS == task.id:
-                    self.handler.set_lamp_hours(int(task.value))
+                    self.handler.set_lamp_hours(int(task.value), MAX_LAMP_HOURS)
 
         print('Worker: Done')
 
@@ -76,86 +76,30 @@ class Worker(QThread):
         self.tasks.append(task)
 
 
-class MainWindow(qt.QMainWindow, ProjectorDataHandler):
+class MainApp:
     def __init__(self):
-        super().__init__()
-
-        self.setWindowTitle('Projector')
-
-        self.worker = Worker(self)
-
+        self.app = QApplication(sys.argv)
+        self.window = MainWindow()
+        self.worker = Worker(self.window)
         self.projector = Projector(self.worker)
         self.connection = ProjectorConnection(self.projector)
 
-        self.layout = qt.QGridLayout()
-        self.row = 0
-
-        self.power_button = qt.QPushButton('ON')
-        self.power_button.setCheckable(True)
-        self.power_button.clicked.connect(self.power_toggled)
-        self.set_color(self.power_button, 'white', 'green')
-
-        self.lamp_progress = qt.QProgressBar()
-        self.lamp_progress.setMinimum(0)
-        self.lamp_progress.setMaximum(MAX_LAMP_LIFE)
-        self.lamp_progress.setValue(0)
-        self.lamp_progress.setFormat('%v/%m hrs')
-
-        self.heartbeatCount = 0
-        self.heartbeat = qt.QLCDNumber()
-
-        self.add_row('Power', self.power_button)
-        self.add_row('Lamp', self.lamp_progress)
-        self.add_row('Heartbeat', self.heartbeat)
-
-        widget = qt.QWidget()
-        widget.setLayout(self.layout)
-        self.setCentralWidget(widget)
-
-    def add_row(self, label, widget):
-        self.layout.addWidget(qt.QLabel(label), self.row, 0)
-        self.layout.addWidget(widget, self.row, 1)
-        self.row += 1
-
-    def power_toggled(self, checked):
-        print("Checked?", checked)
-        self.power_button.setText('OFF' if checked else 'ON')
-        self.set_color(self.power_button,
-                       'black' if checked else 'white',
-                       'red' if checked else 'green')
-
-    def set_color(self, widget, fg, bg):
-        widget.setStyleSheet(f"color: {fg}; background-color : {bg};")
-
-    def connect(self):
+    def start(self):
+        self.window.show()
         self.worker.start()
         self.connection.start()
 
-    def disconnect(self):
+    def stop(self):
         self.connection.stop()
         self.worker.stop()
 
-    def on_idle(self):
-        pass
-        # QGuiApplication.processEvents()
-
-    def set_lamp_hours(self, hrs):
-        self.lamp_progress.setValue(hrs)
-        self.lamp_progress.update()
-
-    def on_heartbeat(self):
-        self.heartbeatCount += 1
-        self.heartbeat.display(self.heartbeatCount)
-        self.heartbeat.update()
+    def exec(self):
+        self.app.exec()
 
 
 if __name__ == '__main__':
-    app = qt.QApplication(sys.argv)
+    main = MainApp()
 
-    window = MainWindow()
-    window.connect()
-    window.show()
-
-    app.exec()
-
-    window.disconnect()
+    main.start()
+    main.exec()
+    main.stop()

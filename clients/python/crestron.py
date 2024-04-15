@@ -1,8 +1,7 @@
-import queue
 import math
+import queue
 
 from data_names import *
-from enum import Enum
 
 
 class ProjectorError(Exception):
