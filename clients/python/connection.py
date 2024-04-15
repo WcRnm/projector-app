@@ -1,37 +1,27 @@
+from PyQt6.QtCore import QThread
+
 import socket
-import threading
 import time
 
-from crestron import Projector, ProjectorDisconnectError
-
-debug = True
-
-connection = None
+from crestron import ProjectorDisconnectError
 
 DEFAULT_PROJECTOR_ADDR = '127.0.0.1'
 DEFAULT_PROJECTOR_PORT = 41794
 
 
 # class ProjectorConnection(plugins.SimplePlugin):
-class ProjectorConnection:
+class ProjectorConnection(QThread):
     def __init__(self, projector):
-        global connection
-        connection = self
-
+        QThread.__init__(self)
         self.projector = projector
-        self.t = None
         self.running = False
         self.status = [self.projector.status]
         self.sock = None
 
-    def start(self):
-        self.running = True
-        self.t = threading.Thread(target=ProjectorConnection.worker)
-        self.t.daemon = True
-        self.t.start()
-
     def stop(self):
         self.running = False
+        self.sock.close()
+        self.wait()
 
     def connect(self):
         try:
@@ -50,26 +40,24 @@ class ProjectorConnection:
                 self.sock = None
                 self.projector.reset()
 
-    def process(self):
-        if self.sock is None:
-            self.connect()
+    def run(self):
+        self.running = True
 
-        if self.sock is not None:
-            try:
-                data = self.sock.recv(1024)
-                self.projector.handle_data(data)
+        while self.running:
+            if self.sock is None:
+                self.connect()
 
-            except IOError:
-                self.disconnect()
-            except ProjectorDisconnectError:
-                self.disconnect()
+            if self.sock is not None:
+                try:
+                    data = self.sock.recv(1024)
+                    self.projector.handle_data(data)
 
-        self.projector.idle_tasks(self.sock)
+                except IOError:
+                    self.disconnect()
+                except ProjectorDisconnectError:
+                    self.disconnect()
 
-    @staticmethod
-    def worker():
-        while connection.running:
-            time.sleep(1)
-            connection.process()
+            self.projector.idle_tasks(self.sock)
+            time.sleep(0.2)
 
-        connection.disconect()
+        self.running = False

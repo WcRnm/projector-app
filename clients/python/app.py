@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import PyQt6.QtWidgets as qt
-from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtCore import QThread
 
 from enum import IntEnum
@@ -10,6 +9,7 @@ import time
 from connection import ProjectorConnection
 from crestron import Projector
 from data_names import DataId
+from handler import ProjectorDataHandler
 
 VERSION = 0.1
 MAX_LAMP_LIFE = 400  # hrs
@@ -29,9 +29,9 @@ class UiTask:
 
 
 class Worker(QThread):
-    def __init__(self, main):
+    def __init__(self, handler):
         QThread.__init__(self)
-        self.main = main
+        self.handler = handler
         self.running = False
         self.tasks = []
 
@@ -54,9 +54,9 @@ class Worker(QThread):
                 task = self.tasks.pop()
 
                 if TaskType.Heartbeat == task.type:
-                    self.main.on_heartbeat()
+                    self.handler.on_heartbeat()
                 elif DataId.STATE_LAMP_HOURS == task.id:
-                    self.main.set_lamp_hours(int(task.value))
+                    self.handler.set_lamp_hours(int(task.value))
 
         print('Worker: Done')
 
@@ -76,7 +76,7 @@ class Worker(QThread):
         self.tasks.append(task)
 
 
-class MainWindow(qt.QMainWindow):
+class MainWindow(qt.QMainWindow, ProjectorDataHandler):
     def __init__(self):
         super().__init__()
 
