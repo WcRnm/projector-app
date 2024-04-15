@@ -84,9 +84,9 @@ class Projector:
                 sock.send(self.msg_end_of_query_response(self.handle))
             elif TASK_VALUE == task:
                 name = self.namer.get_name(data_id, value_type)
-                LOG_D("  {} = {}".format(name, data_value))
+                LOG_D(f"  {data_id}) {name} = {data_value}")
                 self.status[name] = data_value
-                self.callbacks.on_value_change(data_id, name, data_value)
+                self.callbacks.on_value_change(name, data_value)
             elif TASK_HEARTBEAT == task:
                 self.callbacks.on_heartbeat()
             else:
@@ -96,7 +96,7 @@ class Projector:
         self.tasks.put((task, data_id, value_type, data_value))
 
     def handle_data(self, data):
-        LOG_D("read {}".format(len(data)))
+        # LOG_D("read {}".format(len(data)))
         self.status[ONLINE] = True
 
         self.buffer.extend(data)

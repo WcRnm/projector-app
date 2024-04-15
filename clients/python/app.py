@@ -1,30 +1,30 @@
 import sys
 import time
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import Enum
 
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QThread
 
 from connection import ProjectorConnection
 from crestron import Projector
-from data_names import DataId
+from data_names import STATE_LAMP_HOURS
 from ui import MainWindow
 
 VERSION = 0.1
 MAX_LAMP_HOURS = 400  # hrs
 
 
-class TaskType(IntEnum):
-    Heartbeat = 0
-    Value = 1
+class TaskType(Enum):
+    Heartbeat = 'Heartbeat'
+    Value = 'Value'
+    ConnectionState = 'ConnectionState'
 
 
 @dataclass
 class UiTask:
     type: TaskType
-    id: int
-    nam: str
+    name: str
     value: any
 
 
@@ -48,30 +48,45 @@ class Worker(QThread):
         print('Worker: Run')
 
         while self.running:
-            time.sleep(0.25)
+            if len(self.tasks) > 0:
+                task = self.tasks.pop(0)
 
-            while len(self.tasks) > 0:
-                task = self.tasks.pop()
+                # print(f'run:task({task})')
 
                 if TaskType.Heartbeat == task.type:
                     self.handler.on_heartbeat()
-                elif DataId.STATE_LAMP_HOURS == task.id:
-                    self.handler.set_lamp_hours(int(task.value), MAX_LAMP_HOURS)
+                elif TaskType.ConnectionState == task.type:
+                    self.handler.on_connect_change(task.value)
+                elif TaskType.Value == task.type:
+                    if STATE_LAMP_HOURS == task.name:
+                        self.handler.set_lamp_hours(int(task.value))
+                else:
+                    print(f'UNHANDLED: {task}')
+            else:
+                time.sleep(0.25)
+                QApplication.processEvents()
 
         print('Worker: Done')
 
     def on_idle(self):
         pass
 
-    def on_value_change(self, data_id, data_name, data_value):
+    def on_value_change(self, data_name, data_value):
         task = UiTask(
-            TaskType.Value, data_id, data_name, data_value
+            TaskType.Value, data_name, data_value
         )
         self.tasks.append(task)
 
     def on_heartbeat(self):
         task = UiTask(
-            TaskType.Heartbeat, 0, 'Heartbeat', 0
+            TaskType.Heartbeat, '', 0
+        )
+        self.tasks.append(task)
+
+    def on_connect_change(self, state):
+        # print(f'w:on_connect_change({state.value})')
+        task = UiTask(
+            TaskType.ConnectionState, '', state
         )
         self.tasks.append(task)
 
@@ -79,21 +94,24 @@ class Worker(QThread):
 class MainApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
-        self.window = MainWindow()
+        self.window = MainWindow(MAX_LAMP_HOURS)
         self.worker = Worker(self.window)
         self.projector = Projector(self.worker)
-        self.connection = ProjectorConnection(self.projector)
+        self.connection = ProjectorConnection(self.projector, self.worker)
 
     def start(self):
+        print('mainapp:start')
         self.window.show()
         self.worker.start()
         self.connection.start()
 
     def stop(self):
+        print('mainapp:stop')
         self.connection.stop()
         self.worker.stop()
 
     def exec(self):
+        print('mainapp:exec')
         self.app.exec()
 
 

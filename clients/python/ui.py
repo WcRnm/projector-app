@@ -1,16 +1,18 @@
 import PyQt6.QtWidgets as qt
 
-from handler import ProjectorDataHandler
+from handler import *
 
 
 class MainWindow(qt.QMainWindow, ProjectorDataHandler):
-    def __init__(self):
+    def __init__(self, max_lamp_hrs):
         super().__init__()
 
         self.setWindowTitle('Projector')
 
         self.layout = qt.QGridLayout()
         self.row = 0
+
+        self.connection = qt.QLabel(ConnectState.Disconnected.value)
 
         self.power_button = qt.QPushButton('ON')
         self.power_button.setCheckable(True)
@@ -19,10 +21,13 @@ class MainWindow(qt.QMainWindow, ProjectorDataHandler):
 
         self.lamp_progress = qt.QProgressBar()
         self.lamp_progress.setFormat('%v/%m hrs')
+        self.lamp_progress.setMinimum(0)
+        self.lamp_progress.setMaximum(max_lamp_hrs)
 
         self.heartbeatCount = 0
         self.heartbeat = qt.QLCDNumber()
 
+        self.add_row('Connection', self.connection)
         self.add_row('Power', self.power_button)
         self.add_row('Lamp', self.lamp_progress)
         self.add_row('Heartbeat', self.heartbeat)
@@ -46,16 +51,21 @@ class MainWindow(qt.QMainWindow, ProjectorDataHandler):
     def set_color(self, widget, fg, bg):
         widget.setStyleSheet(f"color: {fg}; background-color : {bg};")
 
+    def on_connect_change(self, state):
+        print(f'ui:on_connect_change({state.value})')
+        self.connection.setText(state.value)
+
     def on_idle(self):
         pass
         # QGuiApplication.processEvents()
 
-    def set_lamp_hours(self, curr_hrs, max_hrs):
-        self.lamp_progress.setMaximum(max_hrs)
+    def set_lamp_hours(self, curr_hrs):
+        print(f'ui:set_lamp_hours({curr_hrs})')
         self.lamp_progress.setValue(curr_hrs)
-        self.lamp_progress.update()
+        # self.lamp_progress.update()
 
     def on_heartbeat(self):
         self.heartbeatCount += 1
+        print(f'ui:on_heartbeat({self.heartbeatCount})')
         self.heartbeat.display(self.heartbeatCount)
-        self.heartbeat.update()
+        # self.heartbeat.update()

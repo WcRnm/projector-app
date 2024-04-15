@@ -19,11 +19,14 @@ class DataId(IntEnum):
     INFO_FIRMWARE = 5056
 
 
+STATE_LAMP_HOURS = 'state-lamp-hrs'
+
+
 class DataNamer:
     def __init__(self):
         self.TEXT_NAMES = {
             2: 'state-error',
-            5: 'state-lamp-hrs',
+            5: STATE_LAMP_HOURS,
             5003: 'state-mode',
             5010: 'value-source',
             5040: 'network-ip-addr',
