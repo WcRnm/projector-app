@@ -3,12 +3,12 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 
-from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QThread
+from PyQt6.QtWidgets import QApplication
 
 from connection import ProjectorConnection
 from crestron import Projector
-from data_names import STATE_LAMP_HOURS
+from data_names import *
 from ui import MainWindow
 
 VERSION = 0.1
@@ -51,8 +51,6 @@ class Worker(QThread):
             if len(self.tasks) > 0:
                 task = self.tasks.pop(0)
 
-                # print(f'run:task({task})')
-
                 if TaskType.Heartbeat == task.type:
                     self.handler.on_heartbeat()
                 elif TaskType.ConnectionState == task.type:
@@ -60,6 +58,22 @@ class Worker(QThread):
                 elif TaskType.Value == task.type:
                     if STATE_LAMP_HOURS == task.name:
                         self.handler.set_lamp_hours(int(task.value))
+                    elif NETWORK_IPADDR == task.name:
+                        self.handler.set_network_address(task.value, None)
+                    elif NETWORK_PORT == task.name:
+                        self.handler.set_network_address(None, int(task.value))
+                    elif NETWORK_MAC == task.name:
+                        self.handler.set_mac_address(task.value)
+                    elif CONFIG_LOCATION == task.name:
+                        self.handler.set_location(task.value)
+                    elif STATE_ERROR == task.name:
+                        self.handler.set_error(task.value)
+                    elif INFO_RESOLUTION == task.name:
+                        self.handler.set_resolution(task.value)
+                    elif INFO_FIRMWARE == task.name:
+                        self.handler.set_firmware(task.value)
+                    else:
+                        print(f'UNHANDLED: {task}')
                 else:
                     print(f'UNHANDLED: {task}')
             else:

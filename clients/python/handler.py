@@ -24,3 +24,27 @@ class ProjectorDataHandler:
     @abstractmethod
     def set_lamp_hours(self, curr_hrs):
         pass
+
+    @abstractmethod
+    def set_network_address(self, addr, port):
+        pass
+
+    @abstractmethod
+    def set_mac_address(self, addr):
+        pass
+
+    @abstractmethod
+    def set_location(self, loc):
+        pass
+
+    @abstractmethod
+    def set_resolution(self, res):
+        pass
+
+    @abstractmethod
+    def set_error(self, error):
+        pass
+
+    @abstractmethod
+    def set_firmware(self, firmware):
+        pass

@@ -1,5 +1,3 @@
-from enum import IntEnum
-
 # Statuses
 ONLINE = 'conn-online'
 MSG_COUNT = 'conn-msg-count'
@@ -8,34 +6,33 @@ DATA_TEXT = 'text'
 DATA_BOOL = 'boolean'
 DATA_ANALOG = 'analog'
 
-
-class DataId(IntEnum):
-    STATE_ERROR = 2,
-    STATE_LAMP_HOURS = 5
-    STATE_MODE = 5003
-    NETWORK_IPADDR = 5040
-    NETWORK_PORT = 5047
-    INFO_RESOLUTION = 5054
-    INFO_FIRMWARE = 5056
-
-
+STATE_ERROR = 'state-error'
 STATE_LAMP_HOURS = 'state-lamp-hrs'
+STATE_MODE = 'state-mode'
+STATE_SOURCE = 'state-source'
+NETWORK_IPADDR = 'network-ipaddr'
+NETWORK_MASK = 'network-netmask'
+NETWORK_MAC = 'network-mac'
+NETWORK_PORT = 'network-port'
+CONFIG_LOCATION = 'config-location'
+INFO_RESOLUTION = 'info-resolution'
+INFO_FIRMWARE = 'info-firmware'
 
 
 class DataNamer:
     def __init__(self):
         self.TEXT_NAMES = {
-            2: 'state-error',
+            2: STATE_ERROR,
             5: STATE_LAMP_HOURS,
-            5003: 'state-mode',
-            5010: 'value-source',
-            5040: 'network-ip-addr',
-            5041: 'network-netmask',
-            5044: 'network-mac-addr',
-            5047: 'network-port',
-            5052: 'config-location',
-            5054: 'info-resolution',
-            5056: 'info-firmware-version',
+            5003: STATE_MODE,
+            5010: STATE_SOURCE,
+            5040: NETWORK_IPADDR,
+            5041: NETWORK_MASK,
+            5044: NETWORK_MAC,
+            5047: NETWORK_PORT,
+            5052: CONFIG_LOCATION,
+            5054: INFO_RESOLUTION,
+            5056: INFO_FIRMWARE,
             5070: 'value-source-1',
             5071: 'value-source-2',
             5072: 'value-source-3',
