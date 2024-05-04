@@ -2,7 +2,7 @@ import time
 import math
 import socket
 
-import constants as c
+from simulator.sim import constants as c
 
 
 class Error(Exception):
@@ -28,50 +28,62 @@ class ProjectorSim:
         self.conn = None
         self.client_id = 0
         self.handle = 0
-        self.start = 0
+        self.start_time = 0
+        self.running = False
+        self.sever_socket = None
 
     def log(self, msg):
-        print('{0:6} {1}'.format((ms() - self.start), msg))
+        print('{0:6} {1}'.format((ms() - self.start_time), msg))
+
+    def stop(self):
+        self.running = False
+        if self.sever_socket is not None:
+            self.sever_socket.close()
 
     def run(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((self.host, self.port))
-            s.listen()
+        self.running = True
+        self.sever_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sever_socket.bind((self.host, self.port))
+        self.sever_socket.listen()
 
-            print("Listening on port ", self.port)
-            while True:
-                pending = bytearray()
-                conn, addr = s.accept()
-                try:
-                    with conn:
-                        self.conn = conn
-                        self.start = ms()
-                        self.log('Connected to {}'.format(addr))
+        print("Listening on port ", self.port)
+        while self.running:
+            pending = bytearray()
+            try:
+                conn, addr = self.sever_socket.accept()
+            except OSError:
+                return
 
-                        conn.sendall(ProjectorSim.connect_request())
+            try:
+                with conn:
+                    self.conn = conn
+                    self.start_time = ms()
+                    self.log('Connected to {}'.format(addr))
 
-                        while True:
-                            data = conn.recv(64)
-                            if len(data) == 0:
-                                self.log('Client disconnect')
-                                break
+                    conn.sendall(ProjectorSim.connect_request())
 
-                            # append data to pending messages
-                            for b in data:
-                                pending.append(b)
+                    while True:
+                        data = conn.recv(64)
+                        if len(data) == 0:
+                            self.log('Client disconnect')
+                            break
 
-                            while self.handle_message(pending):
-                                continue
+                        # append data to pending messages
+                        for b in data:
+                            pending.append(b)
 
-                except ProtocolError as e:
-                    self.log('ProtocolError: {}'.format(e.message))
-                except IOError as e:
-                    self.log('IOError: {}'.format(e))
-                finally:
-                    conn.close()
-                    self.conn = None
+                        while self.handle_message(pending):
+                            continue
 
-                self.log('Connection Done')
+            except ProtocolError as e:
+                self.log('ProtocolError: {}'.format(e.message))
+            except IOError as e:
+                self.log('IOError: {}'.format(e))
+            finally:
+                conn.close()
+                self.conn = None
+
+            self.log('Connection Done')
 
     def send_message(self, msg):
         if self.conn is not None:
